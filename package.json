@@ -1,0 +1,17 @@
+{
+  "name": "api-ada",
+  "version": "1.0.0",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "authors": "Maria Gabriela Martinez Herrero, Antonela Borgogno",
+  "license": "ISC",
+  "description": "TP Final Modulo 2 - Carrera Backend ADA - 202504",
+  "dependencies": {
+    "uuid": "^13.0.0"
+  }
+}
