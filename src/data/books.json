@@ -1,0 +1,24 @@
+[
+  {
+    "id": "1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p",
+    "title": "Cien años de soledad",
+    "authorId": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+    "publisherId": "x1y2z3a4-b5c6-d7e8-f9g0-h1i2j3k4l5m6",
+    "year": 1967,
+    "genre": "Realismo mágico"
+  },
+  {
+    "id": "q1w2e3r4-t5y6-u7i8-o9p0-a1s2d3f4g5h6",
+    "title": "Don Quijote de la Mancha",
+    "authorId": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+    "publisherId": "x7y8z9a0-b1c2-d3e4-f5g6-h7i8j9j0k1k2",
+    "year": 1605,
+    "genre": "Novela de caballería"
+  },
+  {
+    "title": "mi exito presente",
+    "id": "56dd3349-95ea-4357-b6ba-2f424d64b6d9",
+    "authorId": "b8b9ab6d-4e46-4c66-8362-90c42b600522",
+    "publisherId": "41d42342-0ec6-48ba-962d-397e5ceacebd"
+  }
+]
