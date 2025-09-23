@@ -9,31 +9,60 @@ const __dirname = path.dirname(__filename);
 // Construye la ruta al archivo de editoriales de forma absoluta y segura
 const publishersFilePath = path.join(__dirname, '..', 'data', 'publishers.json');
 
-// Función para obtener todas las editoriales
-function getPublishers() {
-  try {
-    const data = fs.readFileSync(publishersFilePath, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Error al leer el archivo de editoriales:', error);
-    return [];
+// Creación de objeto para encapsular los métodos
+const publishersModel = {
+
+  // Función para obtener todas las editoriales
+  getPublishers() {
+    try {
+      const data = fs.readFileSync(publishersFilePath, 'utf8');
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('Error al leer el archivo de editoriales:', error);
+      return [];
+    }
+  },
+
+  // Función para añadir una nueva editorial
+  addPublisher(publisher) {
+    const publishers = this.getPublishers();
+    publishers.push(publisher);
+    fs.writeFileSync(publishersFilePath, JSON.stringify(publishers, null, 2), 'utf8');
+  },
+
+  // Función para buscar editorial por nombre
+  findPublisherByName(name) {
+    const publishers = this.getPublishers();
+    return publishers.find(publisher => publisher.name.toLowerCase() === name.toLowerCase());
+  },
+
+  // Función para editar editorial
+  updatePublisher() {
+
+  }, 
+
+  // Función para eliminar editorial
+  deltePublisher() {
+
   }
 }
 
-// Función para añadir una nueva editorial
-function addPublisher(publisher) {
-  const publishers = getPublishers();
-  publishers.push(publisher);
-  fs.writeFileSync(publishersFilePath, JSON.stringify(publishers, null, 2), 'utf8');
-}
+// Exportar objeto
+export {publishersModel}
 
-function findPublisherByName(name) {
-  const publishers = getPublishers();
-  return publishers.find(publisher => publisher.name.toLowerCase() === name.toLowerCase());
-}
+// -----------------------------------------------------------------------------------
+// Opcion usando el archivo utils.js y el archivo createDataModel.js
+// -----------------------------------------------------------------------------------
+// import { createDataModel } from './createDataModel.js'; 
 
-export {
-  getPublishers,
-  addPublisher,
-  findPublisherByName
-};
+// const PublishersBaseModel = createDataModel('publishers.json');
+
+// const PublishersModel = {
+//     ...PublishersBaseModel,
+
+//     findPublisherByName(name) {
+//         return this.findBy('name', name);
+//     }
+// };
+
+// export { PublishersModel };
