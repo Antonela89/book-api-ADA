@@ -9,7 +9,7 @@ const PORT = 8080;
 const server = net.createServer((socket) => {
   const clientIdentifier = `[${socket.remoteAddress}:${socket.remotePort}]`;
   console.log(`Cliente conectado: ${clientIdentifier}`);
-  socket.write('¡Bienvenido! Escribe "ayuda" para ver la lista de comandos.\n');
+  socket.write('¡Bienvenido a la Biblioteca Virtual!\n');
 
   socket.on('data', (data) => {
     const message = data.toString().trim();
