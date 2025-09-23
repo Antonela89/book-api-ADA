@@ -2,6 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { v4 as uuidv4 } from 'uuid';
 
 // Obtiene la ruta del archivo actual y su directorio
 const __filename = fileURLToPath(import.meta.url);
@@ -25,6 +26,9 @@ const AuthorsModel = {
       return JSON.parse(data);
       // manejo de error
     } catch (error) {
+      if (error.code === 'ENOENT') { // Si el archivo no existe, lo tratamos como vacío
+        return [];
+      }
       console.error('Error al leer el archivo de autores:', error);
       return [];
     }
@@ -32,27 +36,39 @@ const AuthorsModel = {
 
   /**
    * Añade un nuevo autor al archivo JSON.
-   * @param {object} item El elemento a añadir.
+   * @param {object} author  El autor a añadir.
    */
   addAuthor(author) {
     // traemos la lista de objetos con el metodo getAuthors()
     const authors = this.getAuthors();
+    // Asignar un UUID si el autor no viene con uno
+    if (!author.id) {
+      author.id = uuidv4();
+    }
     // agregamos el item a la lista
     authors.push(author);
     // escribimos la nueva lista en el archivo json
     fs.writeFileSync(authorsFilePath, JSON.stringify(authors, null, 2), 'utf8');
   },
 
-  /**
-  * Busca un autor por nombre.
-  * @param {any} name El valor a buscar.
-  * @returns {object|undefined} El elemento encontrado o undefined.
-  */
-  findAuthorByName(name) {
-    // traemos la lista de objetos con el metodo getAuthors()
+  /**Busca TODOS los autores que coincidan con un nombre.
+   * @param {string} name - El nombre a buscar.
+   * @returns {Array<object>} Un array con los autores encontrados (puede estar vacío).
+   */
+  findAuthorsByName(name) {
     const authors = this.getAuthors();
-    // empleamos el metodo toLowerCase() para manejar la sensibilidad a mayúsculas
-    return authors.find(author => author.name.toLowerCase() === name.toLowerCase());
+    // Usamos .filter() para obtener todas las coincidencias
+    return authors.filter(author => author.name.toLowerCase() === name.toLowerCase());
+  },
+
+  /**
+   * Busca un único autor por su ID.
+   * @param {string} id - El ID del autor (UUID).
+   * @returns {object|undefined} El autor encontrado o undefined.
+   */
+  getAuthorById(id) {
+    const authors = this.getAuthors();
+    return authors.find(author => author.id === id);
   },
 
   /**
@@ -115,21 +131,63 @@ export { AuthorsModel }
 // Creamos un modelo de datos genérico para 'authors.json'
 // const AuthorsBaseModel = createDataModel('authors.json');
 
-// Extendemos el objeto base con métodos específicos si son necesarios
-//const AuthorsModel = {
-//...AuthorsBaseModel, // Copiamos todos los métodos del modelo base
+// // Extendemos el objeto base con métodos específicos o alias para mayor claridad
+// const AuthorsModel = {
+//   ...AuthorsBaseModel, // Copiamos todos los métodos genéricos (getAll, add, findById, etc.)
 
-// Añadimos/Sobreescribimos métodos específicos para autores
-//findAuthorByName(name) {
-// Reutilizamos el findBy genérico
-//return this.findBy('name', name);
-//},
+//   /**
+//    * Obtiene todos los autores. Alias de getAll() para claridad semántica.
+//    * @returns {Array} Un array con todos los autores.
+//    */
+//   getAuthors() {
+//     return this.getAll();
+//   },
 
-// Si un autor tiene una propiedad 'alias'
-// findAuthorByAlias(alias) {
-//     const authors = this.getAll();
-//     return authors.find(author => author.alias && author.alias.toLowerCase() === alias.toLowerCase());
-// }
+//   /**
+//    * Añade un nuevo autor. Alias de add() para claridad semántica.
+//    * @param {object} authorData - Los datos del autor a añadir.
+//    */
+//   addAuthor(authorData) {
+//     this.add(authorData);
+//   },
+
+//   /**
+//    * Busca todos los autores que coincidan con un nombre.
+//    * @param {string} name - El nombre a buscar.
+//    * @returns {Array<object>} Un array con los autores encontrados.
+//    */
+//   findAuthorsByName(name) {
+//     // Reutilizamos el método genérico findAllBy del modelo base
+//     return this.findAllBy('name', name);
+//   },
+
+//   /**
+//    * Busca un único autor por su ID. Alias de findById().
+//    * @param {string} id - El ID del autor.
+//    * @returns {object|undefined} El autor encontrado o undefined.
+//    */
+//   getAuthorById(id) {
+//     return this.findById(id);
+//   },
+
+//   /**
+//    * Actualiza un autor por su ID. Alias de update().
+//    * @param {string} id - El ID del autor a actualizar.
+//    * @param {object} updatedData - Los datos a actualizar.
+//    * @returns {boolean} True si se actualizó, false si no.
+//    */
+//   updateAuthor(id, updatedData) {
+//     return this.update(id, updatedData);
+//   },
+
+//   /**
+//    * Elimina un autor por su ID. Alias de delete().
+//    * @param {string} id - El ID del autor a eliminar.
+//    * @returns {boolean} True si se eliminó, false si no.
+//    */
+//   deleteAuthor(id) {
+//     return this.delete(id);
+//   }
 // };
 
 // export { AuthorsModel };

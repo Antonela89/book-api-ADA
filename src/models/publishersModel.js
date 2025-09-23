@@ -42,18 +42,25 @@ const publishersModel = {
     fs.writeFileSync(publishersFilePath, JSON.stringify(publishers, null, 2), 'utf8');
   },
 
-  /**
-  * Busca una editorial por nombre.
-  * @param {any} name El valor a buscar.
-  * @returns {object|undefined} El elemento encontrado o undefined.
-  */
-  findPublisherByName(name) {
-    // traemos la lista de objetos con el metodo getPublishers()
+   /**Busca TODAS las editoriales que coincidan con un nombre.
+   * @param {string} name - El nombre a buscar.
+   * @returns {Array<object>} Un array con las editoriales encontrados (puede estar vacío).
+   */
+  findPublishersByName(name) {
     const publishers = this.getPublishers();
-    // empleamos el metodo toLowerCase() para manejar la sensibilidad a mayúsculas
-    return publishers.find(publisher => publisher.name.toLowerCase() === name.toLowerCase());
+    // Usamos .filter() para obtener todas las coincidencias
+    return publishers.filter(publisher => publisher.name.toLowerCase() === name.toLowerCase());
   },
 
+  /**
+   * Busca un único editorial por su ID.
+   * @param {string} id - El ID del editorial (UUID).
+   * @returns {object|undefined} El editorial encontrado o undefined.
+   */
+  getpublisherById(id) {
+    const publishers = this.getPublishers();
+    return publishers.find(publisher => publisher.id === id);
+  },
   /**
   * Actualiza una editorial existente por su ID.
   * @param {string|number} id El ID del elemento a actualizar, puede ser string o número
@@ -108,16 +115,67 @@ export { publishersModel }
 // -----------------------------------------------------------------------------------
 // Opcion usando el archivo utils.js y el archivo createDataModel.js
 // -----------------------------------------------------------------------------------
-// import { createDataModel } from './createDataModel.js';
+import { createDataModel } from './createDataModel.js';
 
+// // Creamos un modelo de datos genérico para 'publishers.json'
 // const PublishersBaseModel = createDataModel('publishers.json');
 
+// // Extendemos el objeto base con alias para mayor claridad semántica
 // const PublishersModel = {
-//     ...PublishersBaseModel,
+//   ...PublishersBaseModel, // Copiamos todos los métodos genéricos
 
-//     findPublisherByName(name) {
-//         return this.findBy('name', name);
-//     }
+//   /**
+//    * Obtiene todas las editoriales. Alias de getAll().
+//    * @returns {Array} Un array con todas las editoriales.
+//    */
+//   getPublishers() {
+//     return this.getAll();
+//   },
+
+//   /**
+//    * Añade una nueva editorial. Alias de add().
+//    * @param {object} publisherData - Los datos de la editorial a añadir.
+//    */
+//   addPublisher(publisherData) {
+//     this.add(publisherData);
+//   },
+
+//   /**
+//    * Busca todas las editoriales que coincidan con un nombre.
+//    * @param {string} name - El nombre a buscar.
+//    * @returns {Array<object>} Un array con las editoriales encontradas.
+//    */
+//   findPublishersByName(name) {
+//     return this.findAllBy('name', name);
+//   },
+
+//   /**
+//    * Busca una única editorial por su ID. Alias de findById().
+//    * @param {string} id - El ID de la editorial.
+//    * @returns {object|undefined} La editorial encontrada o undefined.
+//    */
+//   getPublisherById(id) {
+//     return this.findById(id);
+//   },
+
+//   /**
+//    * Actualiza una editorial por su ID. Alias de update().
+//    * @param {string} id - El ID de la editorial a actualizar.
+//    * @param {object} updatedData - Los datos a actualizar.
+//    * @returns {boolean} True si se actualizó, false si no.
+//    */
+//   updatePublisher(id, updatedData) {
+//     return this.update(id, updatedData);
+//   },
+
+//   /**
+//    * Elimina una editorial por su ID. Alias de delete().
+//    * @param {string} id - El ID de la editorial a eliminar.
+//    * @returns {boolean} True si se eliminó, false si no.
+//    */
+//   deletePublisher(id) {
+//     return this.delete(id);
+//   }
 // };
 
 // export { PublishersModel };

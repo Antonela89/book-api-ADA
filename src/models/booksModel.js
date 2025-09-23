@@ -42,20 +42,28 @@ const BookModel = {
     fs.writeFileSync(booksFilePath, JSON.stringify(books, null, 2), 'utf8');
   },
 
-  /**
-  * Busca un libro por nombre.
-  * @param {any} name El valor a buscar.
-  * @returns {object|undefined} El elemento encontrado o undefined.
-  */
-  getBookByName(name) {
-    // traemos la lista de objetos con el metodo getBooks()
+  /**Busca TODOS los libros que coincidan con un nombre.
+   * @param {string} name - El nombre a buscar.
+   * @returns {Array<object>} Un array con los libros encontrados (puede estar vacío).
+   */
+  findBooksByName(name) {
     const books = this.getBooks();
-    // empleamos el metodo toLowerCase() para manejar la sensibilidad a mayúsculas
-    return books.find(book => book.name.toLowerCase() === name.toLowerCase());
+    // Usamos .filter() para obtener todas las coincidencias
+    return books.filter(book => book.name.toLowerCase() === name.toLowerCase());
   },
 
   /**
- * Actualiza un editorial existente por su ID.
+   * Busca un único libro por su ID.
+   * @param {string} id - El ID del libro (UUID).
+   * @returns {object|undefined} El libro encontrado o undefined.
+   */
+  getBookById(id) {
+    const books = this.getBooks();
+    return books.find(book => book.id === id);
+  },
+
+  /**
+ * Actualiza un libro existente por su ID.
  * @param {string|number} id El ID del elemento a actualizar, puede ser string o número
  * @param {object} updatedItem Los datos a aplicar al elemento.
  * @returns {boolean} True si se actualizó, false si no se encontró.
@@ -113,21 +121,83 @@ export { BookModel }
 
 // import { createDataModel } from './createDataModel.js';
 
-// const BookBaseModel = createDataModel('books.json');
+// // Creamos un modelo de datos genérico para 'books.json'
+// const BooksBaseModel = createDataModel('books.json');
 
-// const BookModel = {
-//     ...BookBaseModel,
+// // Extendemos el objeto base con métodos específicos y alias
+// const BooksModel = {
+//   ...BooksBaseModel, // Copiamos todos los métodos genéricos
 
-//     getBookByName(name) { // Buscar por la propiedad 'title' del libro
-//         return this.findBy('title', name);
-//     },
+//   /**
+//    * Obtiene todos los libros. Alias de getAll().
+//    * @returns {Array} Un array con todos los libros.
+//    */
+//   getBooks() {
+//     return this.getAll();
+//   },
 
-//     // Ejemplo de un método más específico para libros
-//     // Ver como emplear la busqueda por nombre de autor y despues cruzar con authorsModel
-//     findByAuthorId(authorId) {
-//         const books = this.getAll();
-//         return books.filter(book => book.authorId === authorId);
-//     }
+//   /**
+//    * Añade un nuevo libro. Alias de add().
+//    * @param {object} bookData - Los datos del libro a añadir.
+//    */
+//   addBook(bookData) {
+//     this.add(bookData);
+//   },
+
+//   /**
+//    * Busca un único libro por su ID. Alias de findById().
+//    * @param {string} id - El ID del libro.
+//    * @returns {object|undefined} El libro encontrado o undefined.
+//    */
+//   getBookById(id) {
+//     return this.findById(id);
+//   },
+
+//   /**
+//    * Busca todos los libros que coincidan con un título.
+//    * @param {string} title - El título a buscar.
+//    * @returns {Array<object>} Un array con los libros encontrados.
+//    */
+//   findBooksByTitle(title) {
+//     return this.findAllBy('title', title);
+//   },
+
+//   /**
+//    * MÉTODO ESPECÍFICO: Busca todos los libros de un autor por su ID.
+//    * @param {string} authorId - El ID del autor.
+//    * @returns {Array<object>} Un array con los libros de ese autor.
+//    */
+//   findBooksByAuthorId(authorId) {
+//     return this.findAllBy('authorId', authorId);
+//   },
+
+//   /**
+//    * MÉTODO ESPECÍFICO: Busca todos los libros de una editorial por su ID.
+//    * @param {string} publisherId - El ID de la editorial.
+//    * @returns {Array<object>} Un array con los libros de esa editorial.
+//    */
+//   findBooksByPublisherId(publisherId) {
+//     return this.findAllBy('publisherId', publisherId);
+//   },
+
+//   /**
+//    * Actualiza un libro por su ID. Alias de update().
+//    * @param {string} id - El ID del libro a actualizar.
+//    * @param {object} updatedData - Los datos a actualizar.
+//    * @returns {boolean} True si se actualizó, false si no.
+//    */
+//   updateBook(id, updatedData) {
+//     return this.update(id, updatedData);
+//   },
+
+//   /**
+//    * Elimina un libro por su ID. Alias de delete().
+//    * @param {string} id - El ID del libro a eliminar.
+//    * @returns {boolean} True si se eliminó, false si no.
+//    */
+//   deleteBook(id) {
+//     return this.delete(id);
+//   }
 // };
 
-// export { BookModel };
+// export { BooksModel };

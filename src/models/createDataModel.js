@@ -1,4 +1,5 @@
 import { getFilePath, readJsonFile, writeJsonFile } from '../utils/utils.js';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Función de fábrica para crear objetos de modelo de datos genéricos.
@@ -26,19 +27,31 @@ function createDataModel(filename) {
         },
 
         /**
-         * Añade un nuevo elemento al archivo JSON.
+         * Añade un nuevo elemento al archivo JSON,  asignándole un UUID si no tiene ID.
          * @param {object} item El elemento a añadir.
          */
         add(item) {
             const items = this.getAll(); // Usamos 'this' para llamar a getAll del propio objeto
+            if (!item.id) {
+                item.id = uuidv4();
+            }
             // agregamos el item a la lista
             items.push(item);
             // escribimos la nueva lista en el archivo json
             writeJsonFile(filePath, items);
         },
 
+        /** Busca un único elemento por su ID.
+         * @param {string|number} id El ID del elemento a buscar.
+         * @return {object} elemento segun id.
+         */
+        findById(id) {
+            const items = this.getAll();
+            return items.find(item => item.id === id);
+        },
+
         /**
-         * Busca un elemento por una propiedad específica.
+         * /** Busca TODOS los elementos que coincidan con una propiedad y valor. 
          * @param {string} property La propiedad por la cual buscar (ej. 'name', 'id').
          * @param {any} value El valor a buscar.
          * @returns {object|undefined} El elemento encontrado o undefined.
@@ -49,16 +62,16 @@ function createDataModel(filename) {
             // Evaluamos si el valor ingresado es un string 
             if (typeof value === 'string') {
                 // si es string, empleamos el metodo toLowerCase() para manejar la sensibilidad a mayúsculas
-                return items.find(item => item[property] && item[property].toLowerCase() === value.toLowerCase());
+                return items.filter(item => item[property] && item[property].toLowerCase() === value.toLowerCase());
             }
             // si no es string, trabajamos normalmente
-            return items.find(item => item[property] === value);
+            return items.filter(item => item[property] === value);
         },
 
         /**
          * Actualiza un elemento existente por su ID.
          * @param {string|number} id El ID del elemento a actualizar, puede ser string o número
-         * @param {object} updatedItem Los datos a aplicar al elemento.
+         * 
          * @returns {boolean} True si se actualizó, false si no se encontró.
          */
         update(id, updatedItem) {
