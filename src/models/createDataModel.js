@@ -21,6 +21,7 @@ function createDataModel(filename) {
          * @returns {Array} Los elementos del archivo.
          */
         getAll() {
+            // lectura del archivo json 
             return readJsonFile(filePath);
         },
 
