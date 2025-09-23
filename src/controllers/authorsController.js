@@ -7,7 +7,7 @@ const AuthorsController = {
  * Obtiene todos los autores y devuelve la respuesta formateada.
  * @returns {string} La respuesta formateada como un string.
  */
-  getAuthors() {
+  getAllAuthors() {
     try {
       const authors = AuthorsModel.getAuthors();
       return ResponseFormatter.formatSuccess('Lista de autores obtenida.', authors);
