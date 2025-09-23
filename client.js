@@ -1,121 +1,133 @@
-// Importamos los módulos necesarios
 import net from 'net';
 import readline from 'readline';
 
-// Definimos los datos de conexión
 const PORT = 8080;
 const HOST = '127.0.0.1';
 
-// Función para enviar comandos
-function sendCommand(command, data = null) {
-  const client = new net.Socket();
-
-  client.connect(PORT, HOST, () => {
-    console.log(`\nConectado al servidor para enviar el comando: ${command}`);
-
-    let message = command;
-    if (data) {
-      message += ` ${JSON.stringify(data)}`;
-    }
-
-    client.write(message + '\n');
-  });
-
-  client.on('data', (data) => {
-    console.log('\nRespuesta del servidor:');
-    console.log(data.toString());
-    client.destroy();
-  });
-
-  client.on('close', () => {
-    console.log('Conexión cerrada.');
-    showMenu();
-  });
-
-  client.on('error', (err) => {
-    console.error('\nError de conexión:', err);
-    showMenu();
-  });
-}
-
-// Creamos la interfaz de lectura para el menú
+const client = new net.Socket();
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
 
-// Función para mostrar el menú y manejar la entrada del usuario
-function showMenu() {
-  console.log('\n--- Bienvenido al cliente de Book-API ---');
-  console.log('1. Obtener todos los autores');
-  console.log('2. Obtener todas las editoriales');
-  console.log('3. Obtener todos los libros');
-  console.log('4. Añadir un nuevo libro (ingresar datos)'); // Nuevo
-  console.log('5. Añadir un nuevo autor (ingresar datos)');
-  console.log('6. Añadir una nueva editorial (ingresar datos)');
-  console.log('7. Salir');
-  console.log('-----------------------------------------');
+function handleServerResponse(data) {
+  console.log('\n--- Respuesta del Servidor ---');
+  console.log(data.toString().trim());
+  console.log('----------------------------');
+  setTimeout(showMenu, 500);
+}
 
-  rl.question('Selecciona una opción (1-7): ', (answer) => {
-    switch (answer) {
-      case '1':
-        sendCommand('GET AUTHORS');
-        break;
-      case '2':
-        sendCommand('GET PUBLISHERS');
-        break;
-      case '3':
-        sendCommand('GET BOOKS');
-        break;
-      case '4': // Nueva opción para añadir libro
-        rl.question('Ingresa el título del libro: ', (bookTitle) => {
-          rl.question('Ingresa el nombre del autor: ', (authorName) => {
-            rl.question('Ingresa el nombre de la editorial: ', (publisherName) => {
-              const newBook = {
-                title: bookTitle,
-                authorName: authorName,
-                publisherName: publisherName,
-              };
-              sendCommand('ADD BOOK', newBook);
-            });
-          });
-        });
-        break;
-      case '5':
-        // Pedimos los datos para el nuevo autor
-        rl.question('Ingresa el nombre del autor: ', (authorName) => {
-          rl.question('Ingresa la nacionalidad del autor: ', (authorNationality) => {
-            const newAuthor = {
-              name: authorName,
-              nationality: authorNationality
-            };
-            sendCommand('ADD AUTHOR', newAuthor);
-          });
-        });
-        break;
-      case '6':
-        // Pedimos los datos para la nueva editorial
-        rl.question('Ingresa el nombre de la editorial: ', (publisherName) => {
-          rl.question('Ingresa el país de la editorial: ', (publisherCountry) => {
-            const newPublisher = {
-              name: publisherName,
-              country: publisherCountry
-            };
-            sendCommand('ADD PUBLISHER', newPublisher);
-          });
-        });
-        break;
-      case '7':
-        console.log('Saliendo del programa.');
-        rl.close();
-        break;
+client.connect(PORT, HOST, () => {
+  console.log('Conectado al servidor de la Biblioteca.');
+  showMenu();
+});
+
+client.on('data', handleServerResponse);
+client.on('close', () => {
+  console.log('Desconectado del servidor.');
+  rl.close();
+  process.exit(0);
+});
+client.on('error', (err) => {
+  console.error('Error de conexión:', err.message);
+  process.exit(1);
+});
+
+function showMenu() {
+  console.log('\n--- MENÚ PRINCIPAL ---');
+  console.log('1. Listar por categoría');
+  console.log('2. Buscar en una categoría');
+  console.log('3. Agregar a una categoría');
+  console.log('4. Eliminar de una categoría');
+  console.log('5. Salir');
+  console.log('----------------------');
+
+  rl.question('Selecciona una opción: ', (option) => {
+    switch (option.trim()) {
+      case '1': askCategory('listar'); break;
+      case '2': askCategory('buscar'); break;
+      case '3': askCategory('agregar'); break;
+      case '4': askCategory('eliminar'); break;
+      case '5': client.write('salir'); break;
       default:
-        console.log('Opción no válida. Por favor, selecciona un número del 1 al 7.');
+        console.log('Opción no válida. Inténtalo de nuevo.');
         showMenu();
         break;
     }
   });
 }
 
-// Inicia la aplicación mostrando el menú por primera vez
-showMenu();
+function askCategory(command) {
+  rl.question('¿Sobre qué categoría? (autor, libro, editorial): ', (category) => {
+    category = category.trim().toLowerCase();
+    
+    // Normalizamos la entrada para que coincida con lo que espera el servidor
+    let serverCategory = '';
+    if (category.startsWith('autor')) serverCategory = 'autor';
+    if (category.startsWith('libro')) serverCategory = 'libro';
+    if (category.startsWith('editorial')) serverCategory = 'editorial';
+
+    if (!serverCategory) {
+      console.log('Categoría no válida.');
+      showMenu();
+      return;
+    }
+
+    // El comando 'listar' usa plural, los demás singular
+    const commandCategory = command === 'listar' ? serverCategory + 'es' : serverCategory;
+
+    if (command === 'listar') {
+      client.write(`${command} ${commandCategory}`);
+    } else if (command === 'buscar') {
+      askSearchTerm(command, serverCategory);
+    } else if (command === 'agregar') {
+      askForNewItemData(command, serverCategory);
+    } else if (command === 'eliminar') {
+      askForIdToDelete(command, serverCategory);
+    }
+  });
+}
+
+function askSearchTerm(command, category) {
+  const prompt = category === 'libro' ? 'Ingresa el título a buscar: ' : 'Ingresa el nombre a buscar: ';
+  rl.question(prompt, (term) => {
+    client.write(`${command} ${category} ${term.trim()}`);
+  });
+}
+
+function askForIdToDelete(command, category) {
+    console.log(`\nINFO: Para eliminar, primero busca el/la ${category} para obtener su ID.`);
+    // Sugerimos al usuario que busque primero
+    setTimeout(() => {
+        rl.question(`Ingresa el ID del/de la ${category} a eliminar: `, (id) => {
+            client.write(`${command} ${category} ${id.trim()}`);
+        });
+    }, 500);
+}
+
+function askForNewItemData(command, category) {
+  if (category === 'autor') {
+    rl.question('Nombre del autor: ', (name) => {
+      rl.question('Nacionalidad: ', (nationality) => {
+        const data = { name, nationality };
+        client.write(`${command} ${category} ${JSON.stringify(data)}`);
+      });
+    });
+  } else if (category === 'editorial') {
+    rl.question('Nombre de la editorial: ', (name) => {
+      rl.question('País: ', (country) => {
+        const data = { name, country };
+        client.write(`${command} ${category} ${JSON.stringify(data)}`);
+      });
+    });
+  } else if (category === 'libro') {
+    rl.question('Título del libro: ', (title) => {
+      rl.question('Nombre exacto del autor: ', (authorName) => {
+        rl.question('Nombre exacto de la editorial: ', (publisherName) => {
+          const data = { title, authorName, publisherName };
+          client.write(`${command} ${category} ${JSON.stringify(data)}`);
+        });
+      });
+    });
+  }
+}
