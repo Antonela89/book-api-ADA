@@ -1,57 +1,32 @@
 [
   {
-    "id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+    "id": "1d81f44c-95c8-4b7b-8018-b847c2a71c87",
     "name": "Gabriel García Márquez",
     "nationality": "Colombiana"
   },
   {
-    "id": "s1t2u3v4-w5x6-y7z8-a9b0-c1d2e3f4g5h6",
+    "id": "2e92g55d-96d9-4c8c-8129-c958d3b82d98",
     "name": "Miguel de Cervantes",
     "nationality": "Española"
   },
   {
-    "name": "maria",
-    "nationality": "argento",
-    "id": "330ff7f1-fc1a-4d15-bc66-d18bd2ceeb44"
+    "id": "3f03h66e-07e0-4d9d-8230-d069e4c93e09",
+    "name": "Isabel Allende",
+    "nationality": "Chilena"
   },
   {
-    "name": "pedro",
-    "nationality": "argentino",
-    "id": "c12d1c83-2716-4581-b337-f575f440a623"
+    "id": "4g14i77f-18f1-4e0e-8341-e170f5d04f10",
+    "name": "Jorge Luis Borges",
+    "nationality": "Argentina"
   },
   {
-    "name": "1111",
-    "nationality": "qweqwe",
-    "id": "fbb7605b-caab-47b6-ad33-13b346768464"
+    "id": "5h25j88g-29g2-4f1f-8452-f281g6e15g21",
+    "name": "Julio Verne",
+    "nationality": "Francesa"
   },
   {
-    "name": "gabriela",
-    "nationality": "argentina",
-    "id": "a4474c7c-0769-415a-872d-d2a4b362ad13"
-  },
-  {
-    "name": "gabriela",
-    "nationality": "argenitno",
-    "id": "565ac9ab-456c-45ee-9d98-10486172cc43"
-  },
-  {
-    "name": "gabriela",
-    "nationality": "española",
-    "id": "51fc8ac1-c303-4986-941c-2df501fbe4c7"
-  },
-  {
-    "name": "maria gabriela",
-    "nationality": "argentina",
-    "id": "b8b9ab6d-4e46-4c66-8362-90c42b600522"
-  },
-  {
-    "name": "gabriela",
-    "nationality": "arg",
-    "id": "bd50d122-b8d5-4829-84bd-d8ae506c47d2"
-  },
-  {
-    "name": "maria gabriela",
-    "nationality": "arg",
-    "id": "8e8c9058-fd7e-4157-b560-a703b281c436"
+    "id": "6i36k99h-30h3-4g2g-8563-g392h7f26h32",
+    "name": "Isabel Allende",
+    "nationality": "Estadounidense"
   }
 ]

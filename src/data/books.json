@@ -1,24 +1,42 @@
 [
   {
-    "id": "1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p",
+    "id": "a1b2c3d4-e5f6-4a1a-a1a1-a1b2c3d4e5f6",
     "title": "Cien años de soledad",
-    "authorId": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
-    "publisherId": "x1y2z3a4-b5c6-d7e8-f9g0-h1i2j3k4l5m6",
+    "authorId": "1d81f44c-95c8-4b7b-8018-b847c2a71c87",
+    "publisherId": "7j47l00i-41i4-4h3h-8674-h403i8g37i43",
     "year": 1967,
     "genre": "Realismo mágico"
   },
   {
-    "id": "q1w2e3r4-t5y6-u7i8-o9p0-a1s2d3f4g5h6",
+    "id": "b2c3d4e5-f6g7-4b2b-b2b2-b2c3d4e5f6g7",
     "title": "Don Quijote de la Mancha",
-    "authorId": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
-    "publisherId": "x7y8z9a0-b1c2-d3e4-f5g6-h7i8j9j0k1k2",
+    "authorId": "2e92g55d-96d9-4c8c-8129-c958d3b82d98",
+    "publisherId": "8k58m11j-52j5-4i4i-8785-i514j9h48j54",
     "year": 1605,
-    "genre": "Novela de caballería"
+    "genre": "Novela"
   },
   {
-    "title": "mi exito presente",
-    "id": "56dd3349-95ea-4357-b6ba-2f424d64b6d9",
-    "authorId": "b8b9ab6d-4e46-4c66-8362-90c42b600522",
-    "publisherId": "41d42342-0ec6-48ba-962d-397e5ceacebd"
+    "id": "c3d4e5f6-g7h8-4c3c-c3c3-c3d4e5f6g7h8",
+    "title": "La casa de los espíritus",
+    "authorId": "3f03h66e-07e0-4d9d-8230-d069e4c93e09",
+    "publisherId": "9l69n22k-63k6-4j5j-8896-j625k0i59k65",
+    "year": 1982,
+    "genre": "Realismo mágico"
+  },
+  {
+    "id": "d4e5f6g7-h8i9-4d4d-d4d4-d4e5f6g7h8i9",
+    "title": "Ficciones",
+    "authorId": "4g14i77f-18f1-4e0e-8341-e170f5d04f10",
+    "publisherId": "0m70o33l-74l7-4k6k-8907-k736l1j60l76",
+    "year": 1944,
+    "genre": "Ficción filosófica"
+  },
+  {
+    "id": "e5f6g7h8-i9j0-4e5e-e5e5-e5f6g7h8i9j0",
+    "title": "Veinte mil leguas de viaje submarino",
+    "authorId": "5h25j88g-29g2-4f1f-8452-f281g6e15g21",
+    "publisherId": "9l69n22k-63k6-4j5j-8896-j625k0i59k65",
+    "year": 1870,
+    "genre": "Aventura"
   }
 ]
