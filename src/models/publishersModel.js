@@ -91,7 +91,7 @@ const PublishersModel = {
   * @param {string|number} id El ID del elemento a eliminar.
   * @returns {boolean} True si se eliminó, false si no se encontró.
   */
-  deltePublisher(id) {
+  deletePublisher(id) {
     // traemos la lista de objetos con el metodo getPublishers()
     let publishers = this.getPublishers();
     // verificamos la longitud de la lista (cantidad inicial de elementos)

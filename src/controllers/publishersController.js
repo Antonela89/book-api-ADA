@@ -7,7 +7,7 @@ const PublishersController = {
    * Obtiene todos las editoriales y devuelve la respuesta formateada.
    * @returns {string} La respuesta formateada como un string.
    */
-  getPublishers() {
+  getAllPublishers() {
     try {
       const publishers = PublishersModel.getPublishers();
       return ResponseFormatter.formatSuccess('Lista de editoriales obtenida.', publishers);
