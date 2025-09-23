@@ -51,7 +51,7 @@ function createDataModel(filename) {
         },
 
         /**
-         * /** Busca TODOS los elementos que coincidan con una propiedad y valor. 
+         * Busca TODOS los elementos que coincidan PARCIALMENTE con una propiedad y valor.
          * @param {string} property La propiedad por la cual buscar (ej. 'name', 'id').
          * @param {any} value El valor a buscar.
          * @returns {object|undefined} El elemento encontrado o undefined.
@@ -62,9 +62,11 @@ function createDataModel(filename) {
             // Evaluamos si el valor ingresado es un string 
             if (typeof value === 'string') {
                 // si es string, empleamos el metodo toLowerCase() para manejar la sensibilidad a mayúsculas
-                return items.filter(item => item[property] && item[property].toLowerCase() === value.toLowerCase());
+                // usamos includes para manejar la busqueda parcial
+                return items.filter(item => item[property] && item[property].toLowerCase().includes(value.toLowerCase()));;
             }
             // si no es string, trabajamos normalmente
+            // usamos === para busqueda estricta 
             return items.filter(item => item[property] === value);
         },
 

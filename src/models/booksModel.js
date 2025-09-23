@@ -42,14 +42,15 @@ const BooksModel = {
     fs.writeFileSync(booksFilePath, JSON.stringify(books, null, 2), 'utf8');
   },
 
-  /**Busca TODOS los libros que coincidan con un nombre.
+  /**Busca TODOS los libros que coincidan parciamente con un nombre.
    * @param {string} name - El nombre a buscar.
    * @returns {Array<object>} Un array con los libros encontrados (puede estar vacío).
    */
   findBooksByName(name) {
     const books = this.getBooks();
     // Usamos .filter() para obtener todas las coincidencias
-    return books.filter(book => book.name.toLowerCase() === name.toLowerCase());
+    // busqueda parcial -> includes()
+    return books.filter(book => book.title.toLowerCase().includes(title.toLowerCase()));
   },
 
   /**

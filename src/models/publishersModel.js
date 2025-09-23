@@ -42,14 +42,15 @@ const PublishersModel = {
     fs.writeFileSync(publishersFilePath, JSON.stringify(publishers, null, 2), 'utf8');
   },
 
-   /**Busca TODAS las editoriales que coincidan con un nombre.
+   /**Busca TODAS las editoriales que coincidan parcialmente con un nombre.
    * @param {string} name - El nombre a buscar.
    * @returns {Array<object>} Un array con las editoriales encontrados (puede estar vacío).
    */
   findPublishersByName(name) {
     const publishers = this.getPublishers();
     // Usamos .filter() para obtener todas las coincidencias
-    return publishers.filter(publisher => publisher.name.toLowerCase() === name.toLowerCase());
+    // busqueda parcial -> includes()
+    return publishers.filter(publisher => publisher.name.toLowerCase().includes(name.toLowerCase()));
   },
 
   /**

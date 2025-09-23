@@ -51,14 +51,15 @@ const AuthorsModel = {
     fs.writeFileSync(authorsFilePath, JSON.stringify(authors, null, 2), 'utf8');
   },
 
-  /**Busca TODOS los autores que coincidan con un nombre.
+  /**Busca TODOS los autores que coincidan parcialmente con un nombre.
    * @param {string} name - El nombre a buscar.
    * @returns {Array<object>} Un array con los autores encontrados (puede estar vacío).
    */
   findAuthorsByName(name) {
     const authors = this.getAuthors();
     // Usamos .filter() para obtener todas las coincidencias
-    return authors.filter(author => author.name.toLowerCase() === name.toLowerCase());
+    // busqueda parcial -> includes()
+    return authors.filter(author => author.name.toLowerCase().includes(name.toLowerCase()));
   },
 
   /**
