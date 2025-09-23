@@ -13,7 +13,9 @@ function formatBookData(book) {
     id: book.id,
     title: book.title,
     author: author ? author.name : `Autor Desconocido (ID: ${book.authorId})`,
-    publisher: publisher ? publisher.name : `Editorial Desconocida (ID: ${book.publisherId})`
+    publisher: publisher ? publisher.name : `Editorial Desconocida (ID: ${book.publisherId})`,
+    year: book.year || 'N/A',
+    genre: book.genre || 'N/A'
   };
 }
 
