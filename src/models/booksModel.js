@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 const booksFilePath = path.join(__dirname, '..', 'data', 'books.json');
 
 // Creación del objeto BookModel para encapsular metodos
-const BookModel = {
+const BooksModel = {
 
   /**
  * Obtiene todos los libros del archivo JSON.
@@ -111,9 +111,8 @@ const BookModel = {
 }
 
 
-
 // exportación del objeto
-export { BookModel }
+export { BooksModel }
 
 // -----------------------------------------------------------------------------------
 // Opcion usando el archivo utils.js y el archivo createDataModel.js

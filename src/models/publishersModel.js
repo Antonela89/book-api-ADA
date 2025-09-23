@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 const publishersFilePath = path.join(__dirname, '..', 'data', 'publishers.json');
 
 // Creación de objeto para encapsular los métodos
-const publishersModel = {
+const PublishersModel = {
 
   /**
   * Obtiene todos las editoriales del archivo JSON.
@@ -110,7 +110,7 @@ const publishersModel = {
 }
 
 // Exportar objeto
-export { publishersModel }
+export { PublishersModel }
 
 // -----------------------------------------------------------------------------------
 // Opcion usando el archivo utils.js y el archivo createDataModel.js
