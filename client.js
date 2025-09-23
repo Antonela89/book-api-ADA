@@ -10,16 +10,34 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
+// Bandera para evitar duplicar el menú cuando se empieza la conexión con el servidor
+let isInitialConnection = true;
+
+// Función para manejar la respuesta del servidor
 function handleServerResponse(data) {
-  console.log('\n--- Respuesta del Servidor ---');
-  console.log(data.toString().trim());
-  console.log('----------------------------');
-  setTimeout(showMenu, 500);
+  // Si es el primer mensaje que recibimos, es el de bienvenida.
+  if (isInitialConnection) {
+    //Imprimimos el mensaje de bienvenida.
+    console.log(data.toString().trim());
+
+    // Cambiamos la bandera para que las próximas respuestas se manejen de forma normal.
+    isInitialConnection = false;
+
+    // MOSTRAMOS EL MENÚ POR PRIMERA VEZ, solo después de recibir la bienvenida.
+    showMenu();
+  } else {
+    // A partir de aquí, todas son respuestas a comandos del usuario.
+    console.log('\n--- Respuesta del Servidor ---');
+    console.log(data.toString().trim());
+    console.log('----------------------------');
+
+    // Volvemos a mostrar el menú después de un breve instante.
+    setTimeout(showMenu, 500);
+  }
 }
 
 client.connect(PORT, HOST, () => {
   console.log('Conectado al servidor de la Biblioteca.');
-  showMenu();
 });
 
 client.on('data', handleServerResponse);
@@ -41,6 +59,8 @@ function showMenu() {
   console.log('4. Eliminar de una categoría');
   console.log('5. Salir');
   console.log('----------------------');
+  console.log('Puedes escribir "ayuda" para ver la lista de comandos detallada');
+  console.log('----------------------\n');
 
   rl.question('Selecciona una opción: ', (option) => {
     switch (option.trim()) {
@@ -49,6 +69,9 @@ function showMenu() {
       case '3': askCategory('agregar'); break;
       case '4': askCategory('eliminar'); break;
       case '5': client.write('salir'); break;
+      case 'ayuda':
+        client.write('ayuda');
+        break;
       default:
         console.log('Opción no válida. Inténtalo de nuevo.');
         showMenu();
@@ -60,7 +83,7 @@ function showMenu() {
 function askCategory(command) {
   rl.question('¿Sobre qué categoría? (autor, libro, editorial): ', (category) => {
     category = category.trim().toLowerCase();
-    
+
     // Normalizamos la entrada para que coincida con lo que espera el servidor
     let serverCategory = '';
     if (category.startsWith('autor')) serverCategory = 'autor';
@@ -96,13 +119,13 @@ function askSearchTerm(command, category) {
 }
 
 function askForIdToDelete(command, category) {
-    console.log(`\nINFO: Para eliminar, primero busca el/la ${category} para obtener su ID.`);
-    // Sugerimos al usuario que busque primero
-    setTimeout(() => {
-        rl.question(`Ingresa el ID del/de la ${category} a eliminar: `, (id) => {
-            client.write(`${command} ${category} ${id.trim()}`);
-        });
-    }, 500);
+  console.log(`\nINFO: Para eliminar, primero busca el/la ${category} para obtener su ID.`);
+  // Sugerimos al usuario que busque primero
+  setTimeout(() => {
+    rl.question(`Ingresa el ID del/de la ${category} a eliminar: `, (id) => {
+      client.write(`${command} ${category} ${id.trim()}`);
+    });
+  }, 500);
 }
 
 function askForNewItemData(command, category) {
