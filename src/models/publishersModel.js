@@ -57,7 +57,7 @@ const PublishersModel = {
    * @param {string} id - El ID del editorial (UUID).
    * @returns {object|undefined} El editorial encontrado o undefined.
    */
-  getpublisherById(id) {
+  getPublisherById(id) {
     const publishers = this.getPublishers();
     return publishers.find(publisher => publisher.id === id);
   },
