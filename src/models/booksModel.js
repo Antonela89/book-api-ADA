@@ -32,7 +32,7 @@ const BooksModel = {
 
   /**
    * Añade un nuevo libro al archivo JSON.
-   * @param {object} item El elemento a añadir.
+   * @param {object} book El elemento a añadir.
    */
   addBook(book) {
     // traemos la lista de objetos con el metodo getBooks()
@@ -69,8 +69,8 @@ const BooksModel = {
 
   /**
  * Actualiza un libro existente por su ID.
- * @param {string|number} id El ID del elemento a actualizar, puede ser string o número
- * @param {object} updatedItem Los datos a aplicar al elemento.
+ * @param {string} id El ID del elemento a actualizar.
+ * @param {object} updatedBook Los datos a aplicar al elemento.
  * @returns {boolean} True si se actualizó, false si no se encontró.
  */
   updateBook(id, updatedBook) {
@@ -94,7 +94,7 @@ const BooksModel = {
 
   /**
   * Elimina un editorial por su ID.
-  * @param {string|number} id El ID del elemento a eliminar.
+  * @param {string} id El ID del elemento a eliminar.
   * @returns {boolean} True si se eliminó, false si no se encontró.
   */
   deleteBook(id) {

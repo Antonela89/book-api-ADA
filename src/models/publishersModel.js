@@ -32,7 +32,7 @@ const PublishersModel = {
 
   /**
   * Añade una nueva editorial al archivo JSON.
-  * @param {object} item El elemento a añadir.
+  * @param {object} publisher El elemento a añadir.
   */
   addPublisher(publisher) {
     // traemos la lista de objetos con el metodo getPublishers()
@@ -68,8 +68,8 @@ const PublishersModel = {
   },
   /**
   * Actualiza una editorial existente por su ID.
-  * @param {string|number} id El ID del elemento a actualizar, puede ser string o número
-  * @param {object} updatedItem Los datos a aplicar al elemento.
+  * @param {string} id El ID del elemento a actualizar.
+  * @param {object} updatedPublisher Los datos a aplicar al elemento.
   * @returns {boolean} True si se actualizó, false si no se encontró.
   */
   updatePublisher(id, updatedPublisher) {
@@ -93,7 +93,7 @@ const PublishersModel = {
 
   /**
   * Elimina una editorial por su ID.
-  * @param {string|number} id El ID del elemento a eliminar.
+  * @param {string} id El ID del elemento a eliminar.
   * @returns {boolean} True si se eliminó, false si no se encontró.
   */
   deletePublisher(id) {
@@ -120,7 +120,7 @@ export { PublishersModel }
 // -----------------------------------------------------------------------------------
 // Opcion usando el archivo utils.js y el archivo createDataModel.js
 // -----------------------------------------------------------------------------------
-import { createDataModel } from './createDataModel.js';
+// import { createDataModel } from './createDataModel.js';
 
 // // Creamos un modelo de datos genérico para 'publishers.json'
 // const PublishersBaseModel = createDataModel('publishers.json');

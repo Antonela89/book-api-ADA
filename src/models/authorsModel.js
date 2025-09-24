@@ -74,8 +74,8 @@ const AuthorsModel = {
 
   /**
   * Actualiza un autor existente por su ID.
-  * @param {string|number} id El ID del elemento a actualizar, puede ser string o número
-  * @param {object} updatedItem Los datos a aplicar al elemento.
+  * @param {string} id El ID del elemento a actualizar
+  * @param {object} updatedAuthor Los datos a aplicar al elemento.
   * @returns {boolean} True si se actualizó, false si no se encontró.
   */
   updateAuthor(id, updatedAuthor) {
@@ -99,7 +99,7 @@ const AuthorsModel = {
 
   /**
   * Elimina un autor por su ID.
-  * @param {string|number} id El ID del elemento a eliminar.
+  * @param {string} id El ID del elemento a eliminar.
   * @returns {boolean} True si se eliminó, false si no se encontró.
   */
   deleteAuthor(id) {
