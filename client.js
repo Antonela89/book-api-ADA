@@ -10,36 +10,62 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-// Bandera para evitar duplicar el menú cuando se empieza la conexión con el servidor
 let isInitialConnection = true;
+let nextAction = null;
 
-// Función para manejar la respuesta del servidor
 function handleServerResponse(data) {
-  // Si es el primer mensaje que recibimos, es el de bienvenida.
+  const response = data.toString().trim();
+
   if (isInitialConnection) {
-    //Imprimimos el mensaje de bienvenida.
-    console.log(data.toString().trim());
-
-    // Cambiamos la bandera para que las próximas respuestas se manejen de forma normal.
+    console.log(response);
     isInitialConnection = false;
-
-    // MOSTRAMOS EL MENÚ POR PRIMERA VEZ, solo después de recibir la bienvenida.
     showMenu();
-  } else {
-    // A partir de aquí, todas son respuestas a comandos del usuario.
-    console.log('\n--- Respuesta del Servidor ---');
-    console.log(data.toString().trim());
-    console.log('----------------------------');
+    return; // Salimos de la función aquí
+  }
 
-    // Volvemos a mostrar el menú después de un breve instante.
+  // --- LÓGICA CORREGIDA: IF/ELSE para flujos mutuamente excluyentes ---
+  if (nextAction) {
+    // ESTAMOS EN MEDIO DE UN FLUJO DE VARIOS PASOS (EDITAR/ELIMINAR)
+    console.log('\n--- Paso 1: Resultados de la Búsqueda ---');
+    console.log(response);
+    console.log('---------------------------------------');
+
+    const currentAction = nextAction; // Guardamos la acción actual
+    nextAction = null; // Reseteamos el estado INMEDIATAMENTE
+
+    // Usamos startsWith para ser más específicos. Nuestro formateador de errores usa "❌ Error:"
+    if (response.startsWith('❌ Error:')) {
+      console.log('\nLa búsqueda no produjo resultados. Volviendo al menú principal.');
+      setTimeout(showMenu, 500); // Volvemos al menú
+      return; // Detenemos la ejecución de esta función para no pedir el ID
+    }
+
+    if (currentAction.command === 'eliminar') {
+      rl.question(`\nIngresa el ID del/de la ${currentAction.category} a eliminar (de la lista de arriba): `, (id) => {
+        if (id.trim()) client.write(`eliminar ${currentAction.category} ${id.trim()}`);
+        else showMenu();
+      });
+    } else if (currentAction.command === 'editar') {
+      rl.question(`\nIngresa el ID del/de la ${currentAction.category} a editar (de la lista de arriba): `, (id) => {
+        if (id.trim()) {
+          if (currentAction.category === 'autor') askForUpdatedAuthorData(id.trim());
+          else if (currentAction.category === 'editorial') askForUpdatedPublisherData(id.trim());
+          else if (currentAction.category === 'libro') askForUpdatedBookData(id.trim());
+        } else {
+          showMenu();
+        }
+      });
+    }
+  } else {
+    // ESTA ES UNA RESPUESTA A UN COMANDO SIMPLE (LISTAR, AGREGAR, BUSCAR, O EL PASO FINAL DE EDITAR/ELIMINAR)
+    console.log('\n--- Respuesta del Servidor ---');
+    console.log(response);
+    console.log('----------------------------');
     setTimeout(showMenu, 500);
   }
 }
 
-client.connect(PORT, HOST, () => {
-  console.log('Conectado al servidor de la Biblioteca.');
-});
-
+client.connect(PORT, HOST, () => console.log('Conectado al servidor de la Biblioteca.'));
 client.on('data', handleServerResponse);
 client.on('close', () => {
   console.log('Desconectado del servidor.');
@@ -64,16 +90,14 @@ function showMenu() {
   console.log('----------------------\n');
 
   rl.question('Selecciona una opción: ', (option) => {
-    switch (option.trim()) {
+    switch (option.trim().toLowerCase()) {
       case '1': askCategory('listar'); break;
       case '2': askCategory('buscar'); break;
       case '3': askCategory('agregar'); break;
       case '4': askCategory('editar'); break;
       case '5': askCategory('eliminar'); break;
       case '6': client.write('salir'); break;
-      case 'ayuda':
-        client.write('ayuda');
-        break;
+      case 'ayuda': client.write('ayuda'); break;
       default:
         console.log('Opción no válida. Inténtalo de nuevo.');
         showMenu();
@@ -85,8 +109,6 @@ function showMenu() {
 function askCategory(command) {
   rl.question('¿Sobre qué categoría? (autor, libro, editorial): ', (category) => {
     category = category.trim().toLowerCase();
-
-    // Normalizamos la entrada para que coincida con lo que espera el servidor
     let serverCategory = '';
     if (category.startsWith('autor')) serverCategory = 'autor';
     if (category.startsWith('libro')) serverCategory = 'libro';
@@ -98,26 +120,26 @@ function askCategory(command) {
       return;
     }
 
-    let commandCategory = serverCategory; // Por defecto, es singular
-    // El comando 'listar' usa plural, los demás singular
-    if (command === 'listar') {
-      const vowels = 'aeiou';
-      const lastChar = serverCategory.slice(-1); // Obtenemos la última letra
-      // Si la última letra es una vocal, añadimos 's', si no, añadimos 'es'.
-      commandCategory = vowels.includes(lastChar) ? serverCategory + 's' : serverCategory + 'es';
+    if (command === 'listar' || command === 'agregar' || command === 'buscar') {
+      if (command === 'listar') {
+        const vowels = 'aeiou';
+        const lastChar = serverCategory.slice(-1);
+        const commandCategory = vowels.includes(lastChar) ? serverCategory + 's' : serverCategory + 'es';
+        client.write(`listar ${commandCategory}`);
+      }
+      if (command === 'agregar') askForNewItemData('agregar', serverCategory);
+      if (command === 'buscar') askSearchTerm('buscar', serverCategory);
+    } else {
+      initiateMultiStepProcess(command, serverCategory);
     }
+  });
+}
 
-    if (command === 'listar') {
-      client.write(`${command} ${commandCategory}`);
-    } else if (command === 'buscar') {
-      askSearchTerm(command, serverCategory);
-    } else if (command === 'agregar') {
-      askForNewItemData(command, serverCategory);
-    } else if (command === 'editar') {
-      askForIdToEdit(command, serverCategory);
-    } else if (command === 'eliminar') {
-      askForIdToDelete(command, serverCategory);
-    }
+function initiateMultiStepProcess(command, category) {
+  const prompt = category === 'libro' ? `Ingresa el título a ${command}: ` : `Ingresa el nombre a ${command}: `;
+  rl.question(prompt, (term) => {
+    nextAction = { command, category };
+    client.write(`buscar ${category} ${term.trim()}`);
   });
 }
 
@@ -172,36 +194,69 @@ function askForNewItemData(command, category) {
   }
 }
 
-
 /**
- * Guía al usuario para ingresar el ID y los datos para editar un ítem.
- * @param {string} command - El comando 'editar'.
- * @param {string} category - La categoría del ítem a editar.
+ * Pide interactivamente los nuevos datos para un autor.
+ * @param {string} id - El ID del autor a editar.
  */
-function askForIdToEdit(command, category) {
-  console.log(`\nINFO: Para editar, primero busca el/la ${category} para obtener su ID.`);
-  // Sugerimos al usuario que busque primero
-  setTimeout(() => {
-    rl.question(`Ingresa el ID del/de la ${category} a editar: `, (id) => {
-      rl.question(`Ingresa los nuevos datos en formato JSON (ej: {"name":"Nuevo Nombre"}): `, (jsonData) => {
-        // Validamos que el JSON sea al menos plausible antes de enviarlo
-        if (!jsonData.startsWith('{') || !jsonData.endsWith('}')) {
-          console.log('Error: El formato JSON parece incorrecto. Inténtalo de nuevo.');
-          showMenu();
-          return;
-        }
-        client.write(`${command} ${category} ${id.trim()} ${jsonData.trim()}`);
-      });
+function askForUpdatedAuthorData(id) {
+  const updatedData = {};
+  rl.question('Nuevo nombre (deja en blanco para no cambiar): ', (name) => {
+    if (name.trim()) updatedData.name = name.trim();
+    rl.question('Nueva nacionalidad (deja en blanco para no cambiar): ', (nationality) => {
+      if (nationality.trim()) updatedData.nationality = nationality.trim();
+
+      // Si el objeto no está vacío, significa que el usuario cambió al menos un campo.
+      if (Object.keys(updatedData).length > 0) {
+        client.write(`editar autor ${id} ${JSON.stringify(updatedData)}`);
+      } else {
+        console.log('No se realizaron cambios.');
+        showMenu();
+      }
     });
-  }, 500);
+  });
 }
 
-function askForIdToDelete(command, category) {
-  console.log(`\nINFO: Para eliminar, primero busca el/la ${category} para obtener su ID.`);
-  // Sugerimos al usuario que busque primero
-  setTimeout(() => {
-    rl.question(`Ingresa el ID del/de la ${category} a eliminar: `, (id) => {
-      client.write(`${command} ${category} ${id.trim()}`);
+/**
+ * Pide interactivamente los nuevos datos para una editorial.
+ * @param {string} id - El ID de la editorial a editar.
+ */
+function askForUpdatedPublisherData(id) {
+  const updatedData = {};
+  rl.question('Nuevo nombre (deja en blanco para no cambiar): ', (name) => {
+    if (name.trim()) updatedData.name = name.trim();
+    rl.question('Nuevo país (deja en blanco para no cambiar): ', (country) => {
+      if (country.trim()) updatedData.country = country.trim();
+
+      if (Object.keys(updatedData).length > 0) {
+        client.write(`editar editorial ${id} ${JSON.stringify(updatedData)}`);
+      } else {
+        console.log('No se realizaron cambios.');
+        showMenu();
+      }
     });
-  }, 500);
+  });
+}
+
+/**
+ * Pide interactivamente los nuevos datos para un libro.
+ * @param {string} id - El ID del libro a editar.
+ */
+function askForUpdatedBookData(id) {
+  const updatedData = {};
+  rl.question('Nuevo título (deja en blanco para no cambiar): ', (title) => {
+    if (title.trim()) updatedData.title = title.trim();
+    rl.question('Nuevo año de publicación (deja en blanco para no cambiar): ', (year) => {
+      if (year.trim()) updatedData.year = parseInt(year.trim(), 10);
+      rl.question('Nuevo género (deja en blanco para no cambiar): ', (genre) => {
+        if (genre.trim()) updatedData.genre = genre.trim();
+
+        if (Object.keys(updatedData).length > 0) {
+          client.write(`editar libro ${id} ${JSON.stringify(updatedData)}`);
+        } else {
+          console.log('No se realizaron cambios.');
+          showMenu();
+        }
+      });
+    });
+  });
 }
