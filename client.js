@@ -112,10 +112,11 @@ function showMenu() {
   console.log('\n--- MENÚ PRINCIPAL ---');
   console.log('1. Listar por categoría');
   console.log('2. Buscar en una categoría');
-  console.log('3. Agregar a una categoría');
-  console.log('4. Editar en una categoría');
-  console.log('5. Eliminar de una categoría');
-  console.log('6. Salir');
+  console.log('3. Ver por ID');
+  console.log('4. Agregar a una categoría');
+  console.log('5. Editar en una categoría');
+  console.log('6. Eliminar de una categoría');
+  console.log('0. Salir');
   console.log('----------------------');
   console.log('Puedes escribir "ayuda" para ver la lista de comandos detallada');
   console.log('----------------------\n');
@@ -124,10 +125,11 @@ function showMenu() {
     switch (option.trim().toLowerCase()) {
       case '1': askCategory('listar'); break;
       case '2': askCategory('buscar'); break;
-      case '3': askCategory('agregar'); break;
-      case '4': askCategory('editar'); break;
-      case '5': askCategory('eliminar'); break;
-      case '6': client.write('salir'); break;
+      case '3': askCategory('ver'); break;
+      case '4': askCategory('agregar'); break;
+      case '5': askCategory('editar'); break;
+      case '6': askCategory('eliminar'); break;
+      case '0': client.write('salir'); break;
       case 'ayuda': client.write('ayuda'); break;
       default:
         console.log('Opción no válida. Inténtalo de nuevo.');
@@ -175,6 +177,7 @@ function askCategory(command) {
       }
       if (command === 'agregar') askForNewItemData('agregar', serverCategory);
       if (command === 'buscar') askSearchTerm('buscar', serverCategory);
+      if (command === 'ver') askForIdToView('ver', serverCategory);
     } else { // Para editar y eliminar
       initiateMultiStepProcess(command, serverCategory);
     }
@@ -204,6 +207,23 @@ function askSearchTerm(command, category) {
   const prompt = category === 'libro' ? 'Ingresa el título a buscar: ' : 'Ingresa el nombre a buscar: ';
   rl.question(prompt, (term) => {
     client.write(`${command} ${category} ${term.trim()}`);
+  });
+}
+
+/**
+ * Pide al usuario el ID del ítem que desea ver.
+ * @param {string} command - El comando 'ver'.
+ * @param {string} category - La categoría del ítem a ver.
+ */
+function askForIdToView(command, category) {
+  console.log(`\nINFO: Para ver un ítem específico, necesitas su ID. Puedes obtenerlo con la opción 'buscar'.`);
+  rl.question(`Ingresa el ID del/de la ${category} a ver: `, (id) => {
+    if (id.trim()) {
+      client.write(`${command} ${category} ${id.trim()}`);
+    } else {
+      console.log('El ID no puede estar vacío.');
+      showMenu();
+    }
   });
 }
 
