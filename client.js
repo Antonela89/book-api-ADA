@@ -20,10 +20,9 @@ function handleServerResponse(data) {
     console.log(response);
     isInitialConnection = false;
     showMenu();
-    return; // Salimos de la función aquí
+    return;
   }
 
-  // --- LÓGICA CORREGIDA: IF/ELSE para flujos mutuamente excluyentes ---
   if (nextAction) {
     // ESTAMOS EN MEDIO DE UN FLUJO DE VARIOS PASOS (EDITAR/ELIMINAR)
     console.log('\n--- Paso 1: Resultados de la Búsqueda ---');
@@ -42,8 +41,13 @@ function handleServerResponse(data) {
 
     if (currentAction.command === 'eliminar') {
       rl.question(`\nIngresa el ID del/de la ${currentAction.category} a eliminar (de la lista de arriba): `, (id) => {
-        if (id.trim()) client.write(`eliminar ${currentAction.category} ${id.trim()}`);
-        else showMenu();
+        if (id.trim()) {
+          client.write(`eliminar ${currentAction.category} ${id.trim()}`)
+        } else {
+          // Si el usuario presiona Enter sin escribir nada, volvemos al menú.
+          console.log('\nOperación cancelada. Volviendo al menú principal.');
+          showMenu();
+        }
       });
     } else if (currentAction.command === 'editar') {
       rl.question(`\nIngresa el ID del/de la ${currentAction.category} a editar (de la lista de arriba): `, (id) => {
@@ -52,6 +56,7 @@ function handleServerResponse(data) {
           else if (currentAction.category === 'editorial') askForUpdatedPublisherData(id.trim());
           else if (currentAction.category === 'libro') askForUpdatedBookData(id.trim());
         } else {
+          console.log('\nOperación cancelada. Volviendo al menú principal.');
           showMenu();
         }
       });
@@ -106,20 +111,35 @@ function showMenu() {
   });
 }
 
-function askCategory(command) {
-  rl.question('¿Sobre qué categoría? (autor, libro, editorial): ', (category) => {
-    category = category.trim().toLowerCase();
-    let serverCategory = '';
-    if (category.startsWith('autor')) serverCategory = 'autor';
-    if (category.startsWith('libro')) serverCategory = 'libro';
-    if (category.startsWith('editorial')) serverCategory = 'editorial';
 
-    if (!serverCategory) {
-      console.log('Categoría no válida.');
-      showMenu();
-      return;
+/**
+ * Muestra un sub-menú para que el usuario elija la categoría con un número.
+ * @param {string} command - La acción principal seleccionada (listar, buscar, etc.).
+ */
+function askCategory(command) {
+  console.log('\n--- SELECCIONA UNA CATEGORÍA ---');
+  console.log('1. Autor');
+  console.log('2. Libro');
+  console.log('3. Editorial');
+  console.log('4. Volver al menú principal');
+  console.log('--------------------------------');
+
+  rl.question('Elige una categoría (1-4): ', (option) => {
+    let serverCategory = '';
+    switch (option.trim()) {
+      case '1': serverCategory = 'autor'; break;
+      case '2': serverCategory = 'libro'; break;
+      case '3': serverCategory = 'editorial'; break;
+      case '4':
+        showMenu(); // Vuelve al menú principal
+        return;
+      default:
+        console.log('Opción de categoría no válida.');
+        showMenu();
+        return;
     }
 
+    // Una vez que tenemos la categoría, continuamos con el flujo original
     if (command === 'listar' || command === 'agregar' || command === 'buscar') {
       if (command === 'listar') {
         const vowels = 'aeiou';
@@ -129,7 +149,7 @@ function askCategory(command) {
       }
       if (command === 'agregar') askForNewItemData('agregar', serverCategory);
       if (command === 'buscar') askSearchTerm('buscar', serverCategory);
-    } else {
+    } else { // Para editar y eliminar
       initiateMultiStepProcess(command, serverCategory);
     }
   });
