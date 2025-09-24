@@ -43,10 +43,10 @@ const BooksModel = {
   },
 
   /**Busca TODOS los libros que coincidan parciamente con un nombre.
-   * @param {string} name - El nombre a buscar.
+   * @param {string} title - El nombre a buscar.
    * @returns {Array<object>} Un array con los libros encontrados (puede estar vacío).
    */
-  findBooksByName(name) {
+  findBooksByTitle(title) {
     const books = this.getBooks();
     // Usamos .filter() para obtener todas las coincidencias
     // busqueda parcial -> includes()
