@@ -56,8 +56,9 @@ function showMenu() {
   console.log('1. Listar por categoría');
   console.log('2. Buscar en una categoría');
   console.log('3. Agregar a una categoría');
-  console.log('4. Eliminar de una categoría');
-  console.log('5. Salir');
+  console.log('4. Editar en una categoría');
+  console.log('5. Eliminar de una categoría');
+  console.log('6. Salir');
   console.log('----------------------');
   console.log('Puedes escribir "ayuda" para ver la lista de comandos detallada');
   console.log('----------------------\n');
@@ -67,8 +68,9 @@ function showMenu() {
       case '1': askCategory('listar'); break;
       case '2': askCategory('buscar'); break;
       case '3': askCategory('agregar'); break;
-      case '4': askCategory('eliminar'); break;
-      case '5': client.write('salir'); break;
+      case '4': askCategory('editar'); break;
+      case '5': askCategory('eliminar'); break;
+      case '6': client.write('salir'); break;
       case 'ayuda':
         client.write('ayuda');
         break;
@@ -96,8 +98,14 @@ function askCategory(command) {
       return;
     }
 
+    let commandCategory = serverCategory; // Por defecto, es singular
     // El comando 'listar' usa plural, los demás singular
-    const commandCategory = command === 'listar' ? serverCategory + 'es' : serverCategory;
+    if (command === 'listar') {
+      const vowels = 'aeiou';
+      const lastChar = serverCategory.slice(-1); // Obtenemos la última letra
+      // Si la última letra es una vocal, añadimos 's', si no, añadimos 'es'.
+      commandCategory = vowels.includes(lastChar) ? serverCategory + 's' : serverCategory + 'es';
+    }
 
     if (command === 'listar') {
       client.write(`${command} ${commandCategory}`);
@@ -105,6 +113,8 @@ function askCategory(command) {
       askSearchTerm(command, serverCategory);
     } else if (command === 'agregar') {
       askForNewItemData(command, serverCategory);
+    } else if (command === 'editar') {
+      askForIdToEdit(command, serverCategory);
     } else if (command === 'eliminar') {
       askForIdToDelete(command, serverCategory);
     }
@@ -116,16 +126,6 @@ function askSearchTerm(command, category) {
   rl.question(prompt, (term) => {
     client.write(`${command} ${category} ${term.trim()}`);
   });
-}
-
-function askForIdToDelete(command, category) {
-  console.log(`\nINFO: Para eliminar, primero busca el/la ${category} para obtener su ID.`);
-  // Sugerimos al usuario que busque primero
-  setTimeout(() => {
-    rl.question(`Ingresa el ID del/de la ${category} a eliminar: `, (id) => {
-      client.write(`${command} ${category} ${id.trim()}`);
-    });
-  }, 500);
 }
 
 function askForNewItemData(command, category) {
@@ -144,13 +144,64 @@ function askForNewItemData(command, category) {
       });
     });
   } else if (category === 'libro') {
+    // preguntamos por el título
     rl.question('Título del libro: ', (title) => {
+      // preguntamos por el autor
       rl.question('Nombre exacto del autor: ', (authorName) => {
+        // preguntamos por la editorial
         rl.question('Nombre exacto de la editorial: ', (publisherName) => {
-          const data = { title, authorName, publisherName };
-          client.write(`${command} ${category} ${JSON.stringify(data)}`);
+          // preguntamos por el año de publicación
+          rl.question('Año de publicación: ', (year) => {
+            // preguntamos por el género
+            rl.question('Género: ', (genre) => {
+              // Construimos el objeto completo con los nuevos datos
+              const data = {
+                title,
+                authorName,
+                publisherName,
+                // Convertimos el año a número, por si acaso
+                year: parseInt(year, 10),
+                genre
+              };
+              client.write(`${command} ${category} ${JSON.stringify(data)}`);
+            });
+          });
         });
       });
     });
   }
+}
+
+
+/**
+ * Guía al usuario para ingresar el ID y los datos para editar un ítem.
+ * @param {string} command - El comando 'editar'.
+ * @param {string} category - La categoría del ítem a editar.
+ */
+function askForIdToEdit(command, category) {
+  console.log(`\nINFO: Para editar, primero busca el/la ${category} para obtener su ID.`);
+  // Sugerimos al usuario que busque primero
+  setTimeout(() => {
+    rl.question(`Ingresa el ID del/de la ${category} a editar: `, (id) => {
+      rl.question(`Ingresa los nuevos datos en formato JSON (ej: {"name":"Nuevo Nombre"}): `, (jsonData) => {
+        // Validamos que el JSON sea al menos plausible antes de enviarlo
+        if (!jsonData.startsWith('{') || !jsonData.endsWith('}')) {
+          console.log('Error: El formato JSON parece incorrecto. Inténtalo de nuevo.');
+          showMenu();
+          return;
+        }
+        client.write(`${command} ${category} ${id.trim()} ${jsonData.trim()}`);
+      });
+    });
+  }, 500);
+}
+
+function askForIdToDelete(command, category) {
+  console.log(`\nINFO: Para eliminar, primero busca el/la ${category} para obtener su ID.`);
+  // Sugerimos al usuario que busque primero
+  setTimeout(() => {
+    rl.question(`Ingresa el ID del/de la ${category} a eliminar: `, (id) => {
+      client.write(`${command} ${category} ${id.trim()}`);
+    });
+  }, 500);
 }
