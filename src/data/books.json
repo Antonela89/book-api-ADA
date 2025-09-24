@@ -38,5 +38,13 @@
     "publisherId": "9l69n22k-63k6-4j5j-8896-j625k0i59k65",
     "year": 1870,
     "genre": "Aventura"
+  },
+  {
+    "title": "El Aleph",
+    "authorId": "4g14i77f-18f1-4e0e-8341-e170f5d04f10",
+    "publisherId": "0m70o33l-74l7-4k6k-8907-k736l1j60l76",
+    "year": 1949,
+    "genre": "Cuento",
+    "id": "b3fb89a8-5e70-4781-b0e9-a527f2fe237e"
   }
 ]

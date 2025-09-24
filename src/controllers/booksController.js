@@ -82,9 +82,9 @@ const BooksController = {
  */
   addBook(bookData) {
     try {
-      const { title, authorName, publisherName } = bookData;
-      if (!title || !authorName || !publisherName) {
-        return ResponseFormatter.formatError('Faltan datos obligatorios (title, authorName, publisherName).');
+      const { title, authorName, publisherName, year, genre} = bookData;
+      if (!title || !authorName || !publisherName  || !year || !genre) {
+        return ResponseFormatter.formatError('Faltan datos obligatorios (titulo, autor, editorial, año de publicación, género).');
       }
 
       // Validar autor
@@ -97,7 +97,7 @@ const BooksController = {
       if (publishers.length === 0) return ResponseFormatter.formatError(`La editorial "${publisherName}" no existe.`);
       if (publishers.length > 1) return ResponseFormatter.formatError(`El nombre de editorial "${publisherName}" es ambiguo. Use 'buscar-editorial ${publisherName}' para obtener el ID exacto y vuelva a intentarlo.`);
 
-      const newBook = { title, authorId: authors[0].id, publisherId: publishers[0].id };
+      const newBook = { title, authorId: authors[0].id, publisherId: publishers[0].id, year, genre };
       BooksModel.addBook(newBook);
       return ResponseFormatter.formatSuccess('Libro añadido correctamente.', newBook);
 

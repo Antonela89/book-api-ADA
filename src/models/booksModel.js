@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { v4 as uuidv4 } from 'uuid';
 
 // Obtiene la ruta del archivo actual y su directorio
 const __filename = fileURLToPath(import.meta.url);
@@ -36,6 +37,9 @@ const BooksModel = {
   addBook(book) {
     // traemos la lista de objetos con el metodo getBooks()
     const books = this.getBooks();
+    if (!book.id) {
+      book.id = uuidv4();
+    }
     // agregamos el item a la lista
     books.push(book);
     // escribimos la nueva lista en el archivo json
