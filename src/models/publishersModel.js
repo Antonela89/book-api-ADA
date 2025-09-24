@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { v4 as uuidv4 } from 'uuid';
 
 // Obtiene la ruta del archivo actual y su directorio
 const __filename = fileURLToPath(import.meta.url);
@@ -36,6 +37,9 @@ const PublishersModel = {
   addPublisher(publisher) {
     // traemos la lista de objetos con el metodo getPublishers()
     const publishers = this.getPublishers();
+    if (!publisher.id) {
+      publisher.id = uuidv4();
+    }
     // agregamos el item a la lista
     publishers.push(publisher);
     // escribimos la nueva lista en el archivo json
