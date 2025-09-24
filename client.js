@@ -1,21 +1,36 @@
+// Este es el archivo principal del CLIENTE. Es la interfaz con la que interactúa el usuario.
+// Su trabajo es mostrar menús, pedir datos, construir los comandos y enviarlos al servidor.
+// También se encarga de recibir las respuestas del servidor y mostrarlas.
+
+
+// importaciones
 import net from 'net';
 import readline from 'readline';
 
+// configuracion del cliente
 const PORT = 8080;
 const HOST = '127.0.0.1';
 
+// creamos la instancia del cliente
 const client = new net.Socket();
+// creamos la interfaz para leer y escribir en la consola.
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
 
-let isInitialConnection = true;
-let nextAction = null;
+// Manejo de estado del cliente
+let isInitialConnection = true; // bandera -> manejar el primer mensaje de bienvenida.
+let nextAction = null; // Variable de estado para recordar flujos de varios pasos (editar/eliminar).
 
+/**
+ * Función central que maneja TODAS las respuestas recibidas del servidor.
+ * @param {Buffer} data - Los datos recibidos del servidor.
+ */
 function handleServerResponse(data) {
   const response = data.toString().trim();
 
+  // Si es la primera conexión, solo muestra la bienvenida y luego el menú.
   if (isInitialConnection) {
     console.log(response);
     isInitialConnection = false;
@@ -23,15 +38,16 @@ function handleServerResponse(data) {
     return;
   }
 
+  // Si 'nextAction' tiene un valor, estamos en medio de un flujo de edición/eliminación.
   if (nextAction) {
-    // ESTAMOS EN MEDIO DE UN FLUJO DE VARIOS PASOS (EDITAR/ELIMINAR)
-    console.log('\n--- Paso 1: Resultados de la Búsqueda ---');
+    console.log('\n--- Resultados de la Búsqueda ---');
     console.log(response);
     console.log('---------------------------------------');
 
     const currentAction = nextAction; // Guardamos la acción actual
-    nextAction = null; // Reseteamos el estado INMEDIATAMENTE
+    nextAction = null; // Reseteamos el estado INMEDIATAMENTE para la próxima respuesta.
 
+    // Si la búsqueda falló, detenemos el flujo y volvemos al menú.
     // Usamos startsWith para ser más específicos. Nuestro formateador de errores usa "❌ Error:"
     if (response.startsWith('❌ Error:')) {
       console.log('\nLa búsqueda no produjo resultados. Volviendo al menú principal.');
@@ -39,6 +55,7 @@ function handleServerResponse(data) {
       return; // Detenemos la ejecución de esta función para no pedir el ID
     }
 
+    // Si la búsqueda fue exitosa, continuamos con el siguiente paso.
     if (currentAction.command === 'eliminar') {
       rl.question(`\nIngresa el ID del/de la ${currentAction.category} a eliminar (de la lista de arriba): `, (id) => {
         if (id.trim()) {
@@ -62,7 +79,7 @@ function handleServerResponse(data) {
       });
     }
   } else {
-    // ESTA ES UNA RESPUESTA A UN COMANDO SIMPLE (LISTAR, AGREGAR, BUSCAR, O EL PASO FINAL DE EDITAR/ELIMINAR)
+    // Si no hay una acción pendiente, es una respuesta final a un comando.
     console.log('\n--- Respuesta del Servidor ---');
     console.log(response);
     console.log('----------------------------');
@@ -70,18 +87,27 @@ function handleServerResponse(data) {
   }
 }
 
+// manejo de eventos del cliente
+// conexion
 client.connect(PORT, HOST, () => console.log('Conectado al servidor de la Biblioteca.'));
+// evento data -> cuando recibe respuesta del servidor, aqui llamamos a la función central que maneja todas las respuestas
 client.on('data', handleServerResponse);
+// evento close -> cunado se cierra la conexión
 client.on('close', () => {
   console.log('Desconectado del servidor.');
   rl.close();
   process.exit(0);
 });
+// evento error -> cuando ocurre un error en la conexión
 client.on('error', (err) => {
   console.error('Error de conexión:', err.message);
   process.exit(1);
 });
 
+// Interfaz de Usuario
+/**
+ * Muestra el menú principal de opciones.
+ */
 function showMenu() {
   console.log('\n--- MENÚ PRINCIPAL ---');
   console.log('1. Listar por categoría');
@@ -111,7 +137,6 @@ function showMenu() {
   });
 }
 
-
 /**
  * Muestra un sub-menú para que el usuario elija la categoría con un número.
  * @param {string} command - La acción principal seleccionada (listar, buscar, etc.).
@@ -140,6 +165,7 @@ function askCategory(command) {
     }
 
     // Una vez que tenemos la categoría, continuamos con el flujo original
+    // Decide si es un comando de un paso o de varios (primero buscar y mostrar al usuario los datos y despues eliminar o editar)
     if (command === 'listar' || command === 'agregar' || command === 'buscar') {
       if (command === 'listar') {
         const vowels = 'aeiou';
@@ -155,14 +181,25 @@ function askCategory(command) {
   });
 }
 
+/**
+ * Inicia un flujo de varios pasos pidiendo un término de búsqueda.
+ * @param {string} command - El comando original ('editar' o 'eliminar').
+ * @param {string} category - La categoría sobre la que se actúa.
+ */
 function initiateMultiStepProcess(command, category) {
   const prompt = category === 'libro' ? `Ingresa el título a ${command}: ` : `Ingresa el nombre a ${command}: `;
   rl.question(prompt, (term) => {
+    // Establece la próxima acción y envía el comando de búsqueda.
     nextAction = { command, category };
     client.write(`buscar ${category} ${term.trim()}`);
   });
 }
 
+/**
+ * Pide un término de búsqueda para un comando 'buscar' simple.
+ * @param {string} command - El comando 'buscar'.
+ * @param {string} category - La categoría en la que se busca.
+ */
 function askSearchTerm(command, category) {
   const prompt = category === 'libro' ? 'Ingresa el título a buscar: ' : 'Ingresa el nombre a buscar: ';
   rl.question(prompt, (term) => {
@@ -170,6 +207,11 @@ function askSearchTerm(command, category) {
   });
 }
 
+/**
+ * Guía al usuario para ingresar los datos de un nuevo ítem.
+ * @param {string} command - El comando 'agregar'.
+ * @param {string} category - La categoría del ítem a agregar.
+ */
 function askForNewItemData(command, category) {
   if (category === 'autor') {
     rl.question('Nombre del autor: ', (name) => {

@@ -1,20 +1,31 @@
+// Este es el archivo principal del SERVIDOR. Su trabajo es escuchar las conexiones de los clientes
+//  No contiene lógica de negocio, solo dirige las peticiones al controlador adecuado.
+
+//  importaciones
 import net from 'net';
 import { AuthorsController } from './src/controllers/authorsController.js';
 import { BooksController } from './src/controllers/booksController.js';
 import { PublishersController } from './src/controllers/publishersController.js';
 import { ResponseFormatter } from './src/views/responseFormatter.js';
 
+// configuraciones
 const PORT = 8080;
 
+// net.createServer() crea el servidor. La función que le pasamos se ejecutará CADA VEZ que un nuevo cliente se conecte.
+// 'socket' es el objeto que representa la conexión única y directa con UN cliente.f
 const server = net.createServer((socket) => {
   const clientIdentifier = `[${socket.remoteAddress}:${socket.remotePort}]`;
   console.log(`Cliente conectado: ${clientIdentifier}`);
   socket.write('¡Bienvenido a la Biblioteca Virtual!\n');
 
+  // manejo de eventos
+  // El evento 'data' se dispara cada vez que el cliente envía un mensaje.
   socket.on('data', (data) => {
     const message = data.toString().trim();
     console.log(`${clientIdentifier} Comando recibido: "${message}"`);
 
+    // --- LÓGICA DE PARSEO DE COMANDOS ---
+    // Esta es la parte más compleja: separamos el comando del JSON.
     const firstBraceIndex = message.indexOf('{');
     let commandPart;
     let jsonDataString = null; // Inicia como null
@@ -23,7 +34,7 @@ const server = net.createServer((socket) => {
       // Si no hay '{', todo el mensaje es la parte del comando
       commandPart = message;
     } else {
-      // Si hay '{', separamos el comando de la cadena JSON
+      // Si hay '{',  dividimos el mensaje en dos partes.
       commandPart = message.substring(0, firstBraceIndex).trim();
       jsonDataString = message.substring(firstBraceIndex);
     }
@@ -33,6 +44,7 @@ const server = net.createServer((socket) => {
     let response = '';
 
     try {
+      // El 'switch' actúa como el enrutador principal de nuestra API.
       switch (command) {
         case 'listar':
           if (category === 'autores') response = AuthorsController.getAllAuthors();
@@ -112,23 +124,27 @@ const server = net.createServer((socket) => {
           ].join('\n');
           break;
         case 'salir':
-          socket.end('¡Hasta luego!\n');
+          socket.end('¡Hasta luego!\n'); // cierra la conexión
           return;
 
         default:
           response = ResponseFormatter.formatError(`Comando desconocido: "${command}". Escribe "ayuda".`);
           break;
       }
-    } catch (e) {
-      console.error("Error inesperado en el servidor:", e);
+    } catch (error) {
+      console.error("Error inesperado en el servidor:", error);
       response = ResponseFormatter.formatError("Ocurrió un error fatal en el servidor.");
     }
 
+    // Enviamos la respuesta (preparada por el controlador) de vuelta al cliente.
     socket.write(response + '\n');
   });
 
+  // El evento 'close' se dispara cuando la conexión con este cliente se cierra.
   socket.on('close', () => console.log(`Cliente desconectado: ${clientIdentifier}`));
+  // El evento 'error' se dispara si hay un problema con la conexión de este cliente.
   socket.on('error', (err) => console.error(`Error en socket ${clientIdentifier}: ${err.message}`));
 });
 
+// Ponemos al servidor a escuchar en el puerto definido.
 server.listen(PORT, () => console.log(`Servidor TCP escuchando en el puerto ${PORT}`));
