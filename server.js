@@ -15,8 +15,20 @@ const server = net.createServer((socket) => {
     const message = data.toString().trim();
     console.log(`${clientIdentifier} Comando recibido: "${message}"`);
 
-    const [command, category, param1, ...jsonDataParts] = message.split(' ');
-    const jsonDataString = jsonDataParts.join(' ');
+    const firstBraceIndex = message.indexOf('{');
+    let commandPart;
+    let jsonDataString = null; // Inicia como null
+
+    if (firstBraceIndex === -1) {
+      // Si no hay '{', todo el mensaje es la parte del comando
+      commandPart = message;
+    } else {
+      // Si hay '{', separamos el comando de la cadena JSON
+      commandPart = message.substring(0, firstBraceIndex).trim();
+      jsonDataString = message.substring(firstBraceIndex);
+    }
+
+    const [command, category, param1] = commandPart.split(' ');
 
     let response = '';
 
@@ -58,6 +70,26 @@ const server = net.createServer((socket) => {
             else if (category === 'editorial') response = PublishersController.addPublisher(itemData);
             else response = ResponseFormatter.formatError(`Categoría no válida para agregar: "${category}".`);
           } catch (e) { response = ResponseFormatter.formatError('JSON inválido.'); }
+          break;
+
+        case 'editar':
+          if (!param1) {
+            response = ResponseFormatter.formatError('Falta el ID del elemento a editar.');
+            break;
+          }
+          if (!jsonDataString) {
+            response = ResponseFormatter.formatError('Faltan los datos JSON para editar.');
+            break;
+          }
+          try {
+            const itemData = JSON.parse(jsonDataString);
+            if (category === 'autor') response = AuthorsController.updateAuthor(param1, itemData);
+            else if (category === 'libro') response = BooksController.updateBook(param1, itemData);
+            else if (category === 'editorial') response = PublishersController.updatePublisher(param1, itemData);
+            else response = ResponseFormatter.formatError(`Categoría no válida para editar: "${category}".`);
+          } catch (e) {
+            response = ResponseFormatter.formatError('JSON inválido.');
+          }
           break;
 
         case 'eliminar':
