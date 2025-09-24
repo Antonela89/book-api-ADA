@@ -105,8 +105,8 @@ const server = net.createServer((socket) => {
             '  listar <autores|libros|editoriales>',
             '  buscar <autor|libro|editorial> <nombre/título>',
             '  ver <autor|libro|editorial> <id>',
-            '  agregar <autor|libro|editorial> {json}',
-            '  editar <autor|libro|editorial> <id> {json}',
+            '  agregar <autor|libro|editorial>',
+            '  editar <autor|libro|editorial> <id>',
             '  eliminar <autor|libro|editorial> <id>',
             '  salir'
           ].join('\n');
