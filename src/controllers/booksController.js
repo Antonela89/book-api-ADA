@@ -1,3 +1,7 @@
+// Este es el Controlador de Libros. Es el más complejo porque un libro se relaciona con autores y editoriales. 
+// Por lo tanto, este controlador necesita hablar con los tres modelos (BooksModel, AuthorsModel, PublishersModel) para hacer su trabajo.
+
+// importaciones
 import { BooksModel } from '../models/booksModel.js';
 import { AuthorsModel } from '../models/authorsModel.js';
 import { PublishersModel } from '../models/publishersModel.js';
@@ -5,10 +9,16 @@ import { ResponseFormatter } from '../views/responseFormatter.js';
 
 /**
  * Función auxiliar para formatear los datos de un libro para una mejor visualización.
+ * Reemplaza los IDs (authorId, publisherId) por los nombres correspondientes para que la información sea más legible para el usuario.
+ * @param {object} book - El objeto libro original con IDs.
+ * @returns {object} Un nuevo objeto libro con nombres en lugar de IDs.
  */
 function formatBookData(book) {
+  // Pide al Modelo de Autores que encuentre el autor por su ID.
   const author = AuthorsModel.getAuthorById(book.authorId);
+  // Pide al Modelo de Editoriales que encuentre la editorial por su ID.
   const publisher = PublishersModel.getPublisherById(book.publisherId);
+  // Devuelve un nuevo objeto con los datos listos para mostrar.
   return {
     id: book.id,
     title: book.title,
@@ -19,6 +29,7 @@ function formatBookData(book) {
   };
 }
 
+// Creación del objeto que tiene los métodos relacionados con libros
 const BooksController = {
   /**
   * Obtiene todos los libros y cambia el id del autor y la editorial por los nombres.
@@ -27,6 +38,7 @@ const BooksController = {
   getAllBooks() {
     try {
       const books = BooksModel.getBooks();
+      // Usamos .map() para aplicar la función 'formatBookData' a cada libro de la lista.
       const formatedBooks = books.map(formatBookData);
       return ResponseFormatter.formatSuccess('Lista de libros obtenida.', formatedBooks);
     } catch (error) {
@@ -37,7 +49,7 @@ const BooksController = {
 
   /**
  * Obtiene un libro por su titulo y formatea los datos.
- * @param {string|number} title - El titulo del libro.
+ * @param {string} title - El titulo del libro.
  * @returns {string} La respuesta formateada.
  */
   getBooksByTitle(title) {
@@ -57,7 +69,7 @@ const BooksController = {
 
   /**
 * Obtiene un libro por su id y formatea los datos.
-* @param {string|number} id - El id del libro.
+* @param {string} id - El id del libro.
 * @returns {string} La respuesta formateada.
 */
   getBookById(id) {
@@ -82,8 +94,10 @@ const BooksController = {
  */
   addBook(bookData) {
     try {
-      const { title, authorName, publisherName, year, genre} = bookData;
-      if (!title || !authorName || !publisherName  || !year || !genre) {
+      // Extraemos todos los datos necesarios del objeto recibido (desestructuración).
+      const { title, authorName, publisherName, year, genre } = bookData;
+      // Validamos que todos los campos obligatorios estén presentes.
+      if (!title || !authorName || !publisherName || !year || !genre) {
         return ResponseFormatter.formatError('Faltan datos obligatorios (titulo, autor, editorial, año de publicación, género).');
       }
 
@@ -97,6 +111,7 @@ const BooksController = {
       if (publishers.length === 0) return ResponseFormatter.formatError(`La editorial "${publisherName}" no existe.`);
       if (publishers.length > 1) return ResponseFormatter.formatError(`El nombre de editorial "${publisherName}" es ambiguo. Use 'buscar-editorial ${publisherName}' para obtener el ID exacto y vuelva a intentarlo.`);
 
+      // Si todas las validaciones pasan, creamos el objeto libro listo para guardar.
       const newBook = { title, authorId: authors[0].id, publisherId: publishers[0].id, year, genre };
       BooksModel.addBook(newBook);
       return ResponseFormatter.formatSuccess('Libro añadido correctamente.', newBook);
@@ -109,13 +124,13 @@ const BooksController = {
 
   /**
  * Actualiza un libro existente.
- * @param {string|number} name - El ID del libro a actualizar.
+ * @param {string} name - El ID del libro a actualizar.
  * @param {object} updatedBook - Los datos a actualizar. Puede incluir authorName/publisherName.
  * @returns {string} La respuesta formateada.
  */
-  updateBook(id, dataToUpdate) {
+  updateBook(id, updatedBook) {
     try {
-      if (dataToUpdate.authorName || dataToUpdate.publisherName || dataToUpdate.authorId || dataToUpdate.publisherId) {
+      if (updatedBook.authorName || updatedBook.publisherName || updatedBook.authorId || updatedBook.publisherId) {
         return ResponseFormatter.formatError("Para cambiar autor o editorial, debe eliminar y volver a crear el libro. Solo se permite actualizar título, año y género.");
       }
 
@@ -133,7 +148,7 @@ const BooksController = {
 
   /**
  * Elimina un libro por su ID.
- * @param {string|number} name - El ID del libro a eliminar.
+ * @param {string} name - El ID del libro a eliminar.
  * @returns {string} La respuesta formateada.
  */
   deleteBook(id) {
@@ -151,4 +166,5 @@ const BooksController = {
   }
 };
 
+// exportación
 export { BooksController };

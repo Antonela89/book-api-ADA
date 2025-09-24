@@ -1,7 +1,11 @@
+// Este archivo es el "Controlador" de Autores. Actúa como un intermediario.
+// Recibe peticiones (ej: "dame todos los autores"), le pide los datos al Modelo, y luego le pasa esos datos a la Vista (ResponseFormatter) para que prepare la respuesta final.
+
+// importaciones
 import { AuthorsModel } from '../models/authorsModel.js'; // Importación de objeto model
 import { ResponseFormatter } from '../views/responseFormatter.js'; // importacion de objeto views
 
-// Creación de objeto de para encapsular metodos 
+// Creación de objeto de para encapsular metodos relacionados con autores
 const AuthorsController = {
   /**
  * Obtiene todos los autores y devuelve la respuesta formateada.
@@ -9,10 +13,14 @@ const AuthorsController = {
  */
   getAllAuthors() {
     try {
+      // pide los datos al modelo
       const authors = AuthorsModel.getAuthors();
+      // pasa los datos a la vista para que los formatee
       return ResponseFormatter.formatSuccess('Lista de autores obtenida.', authors);
+      // control de errores
     } catch (error) {
       console.error('Error en getAuthors:', error);
+      // formateo de la respuesta del error
       return ResponseFormatter.formatError('No se pudo obtener la lista de autores.');
     }
   },
@@ -26,7 +34,8 @@ const AuthorsController = {
     try {
       // El modelo devuelve un ARRAY de autores
       const authors = AuthorsModel.findAuthorsByName(name);
-      
+
+      // Comprueba si el Modelo encontró algún autor.
       if (authors.length > 0) {
         return ResponseFormatter.formatSuccess(`Se encontraron ${authors.length} autores con el nombre "${name}".`, authors);
       } else {
@@ -64,11 +73,12 @@ const AuthorsController = {
    */
   addAuthor(newAuthorData) {
     try {
+      // validacion de que esten todos los datos 
       if (!newAuthorData || !newAuthorData.name || !newAuthorData.nationality) {
         return ResponseFormatter.formatError('Faltan datos obligatorios (name, nationality).');
       }
+      // Le pasamos los datos al Modelo para que los guarde.
       AuthorsModel.addAuthor(newAuthorData);
-      // El objeto newAuthorData ahora incluye el ID que le asignó el modelo
       return ResponseFormatter.formatSuccess('Autor añadido correctamente.', newAuthorData);
     } catch (error) {
       console.error('Error en addAuthor:', error);
@@ -84,6 +94,7 @@ const AuthorsController = {
    */
   updateAuthor(id, updatedAuthor) {
     try {
+      // Le pedimos al Modelo que intente actualizar. El Modelo nos dirá si tuvo éxito (true/false).
       const success = AuthorsModel.updateAuthor(id, updatedAuthor);
       if (success) {
         return ResponseFormatter.formatSuccess(`Autor con ID ${id} actualizado correctamente.`);
@@ -103,6 +114,7 @@ const AuthorsController = {
    */
   deleteAuthor(id) {
     try {
+      // Le pedimos al Modelo que intente eliminar. El Modelo nos dirá si tuvo éxito.
       const success = AuthorsModel.deleteAuthor(id);
       if (success) {
         return ResponseFormatter.formatSuccess(`Autor con ID ${id} eliminado correctamente.`);
@@ -116,4 +128,5 @@ const AuthorsController = {
   }
 };
 
+// Exportamos el controlador para que el servidor (server.js) pueda usarlo.
 export { AuthorsController };
