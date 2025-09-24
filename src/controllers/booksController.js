@@ -116,7 +116,7 @@ const BooksController = {
   updateBook(id, dataToUpdate) {
     try {
       if (dataToUpdate.authorName || dataToUpdate.publisherName || dataToUpdate.authorId || dataToUpdate.publisherId) {
-        return ResponseFormatter.formatError("Para cambiar autor o editorial, debe eliminar y volver a crear el libro. Solo se permite actualizar el título.");
+        return ResponseFormatter.formatError("Para cambiar autor o editorial, debe eliminar y volver a crear el libro. Solo se permite actualizar título, año y género.");
       }
 
       const success = BooksModel.updateBook(id, dataToUpdate);
