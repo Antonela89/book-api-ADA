@@ -30,15 +30,12 @@ El proyecto está estructurado siguiendo el patrón **Modelo-Vista-Controlador (
 ### Principio DRY y Reutilización de Código
 
 Se exploraron dos enfoques para la capa de Modelo:
-
 1.  **Modelos Autónomos:** Funcional pero con duplicación de código.
 2.  **Fábrica de Modelos (Enfoque Ideal):** La solución implementada utiliza un módulo de utilidades (`src/utils/`) y una "fábrica" (`src/models/createDataModel.js`) para centralizar la lógica CRUD, adhiriéndose estrictamente al principio **DRY (Don't Repeat Yourself)**.
 
 ---
 
 ## 📂 Estructura de Archivos
-
-El proyecto sigue una estructura de carpetas clara y modular, separando las responsabilidades según el patrón MVC.
 
 ```
 API-ADA/
@@ -112,13 +109,10 @@ En tu primera terminal, ejecuta el siguiente comando.
 ```bash
 npm start
 ```
-
 o alternativamente:
-
 ```bash
 node server.js
 ```
-
 Verás un mensaje de confirmación: `Servidor TCP escuchando en el puerto 8080`.
 
 ### 2. Iniciar el Cliente Interactivo
@@ -128,7 +122,6 @@ En una **segunda terminal**, ejecuta el siguiente comando para conectarte al ser
 ```bash
 node client.js
 ```
-
 Aparecerá el menú principal para empezar a interactuar con la aplicación.
 
 ---
@@ -150,12 +143,12 @@ El proyecto incluye un script que prueba automáticamente el ciclo CRUD y las re
 
 ## 🛠️ Tecnologías Usadas
 
-<img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript"/>
+<p>
+  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript"/>
   <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js"/>
   <img src="https://img.shields.io/badge/TCP%20(Net%20Module)-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Módulo Net"/>
   <img src="https://img.shields.io/badge/Console%20I/O%20(Readline)-52994B?style=for-the-badge&logo=node.js&logoColor=white" alt="Módulo Readline"/>
   <img src="https://img.shields.io/badge/JSON-000000?style=for-the-badge&logo=json&logoColor=white" alt="JSON"/>
-  <img src="https://img.shields.io/badge/OOP_(POO)-F05032?style=for-the-badge&logo=java&logoColor=white" alt="Programación Orientada a Objetos"/>
   <img src="https://img.shields.io/badge/UUID-6B5B95?style=for-the-badge&logo=uuid&logoColor=white" alt="UUID"/>
   <img src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white" alt="Git"/>
   <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"/>
