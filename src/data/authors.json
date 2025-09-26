@@ -25,13 +25,13 @@
     "nationality": "Francesa"
   },
   {
-    "id": "6i36k99h-30h3-4g2g-8563-g392h7f26h32",
-    "name": "Isabel Allende",
-    "nationality": "Estadounidense"
-  },
-  {
     "name": "Julio Cortázar",
     "nationality": "Argentina",
     "id": "5c526ba5-45bf-4930-8074-2b84eb62a856"
+  },
+  {
+    "name": "Julio Verne",
+    "nationality": "Frances",
+    "id": "c229e136-48e4-40e0-b059-f910db470f03"
   }
 ]

@@ -1,6 +1,7 @@
 // Este archivo es el "Controlador" de Editoriales. Al igual que el de autores, es un intermediario que conecta las peticiones con el Modelo de Editoriales y la Vista.
 
 import { PublishersModel } from '../models/publishersModel.js'; // Importación de objeto model
+import { BooksModel } from '../models/booksModel.js';
 import { ResponseFormatter } from '../views/responseFormatter.js'; // importacion de objeto views
 
 //// Creamos el objeto para agrupar todas los métodos relacionadas con editoriales.
@@ -68,6 +69,12 @@ const PublishersController = {
       if (!newPublisherData || !newPublisherData.name || !newPublisherData.country) {
         return ResponseFormatter.formatError('Faltan datos obligatorios (name, country).');
       }
+
+       const existingPublishers = PublishersModel.findPublishersByName(newPublisherData.name);
+      if (existingPublishers.length > 0) {
+        return ResponseFormatter.formatError(`Ya existe una editorial con el nombre "${newPublisherData.name}".`);
+      }
+
       PublishersModel.addPublisher(newPublisherData);
       return ResponseFormatter.formatSuccess('Editorial añadida correctamente.', newPublisherData);
     } catch (error) {

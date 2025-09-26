@@ -3,6 +3,7 @@
 
 // importaciones
 import { AuthorsModel } from '../models/authorsModel.js'; // Importación de objeto model
+import { BooksModel } from '../models/booksModel.js';
 import { ResponseFormatter } from '../views/responseFormatter.js'; // importacion de objeto views
 
 // Creación de objeto de para encapsular metodos relacionados con autores
@@ -67,7 +68,7 @@ const AuthorsController = {
   },
 
   /**
-   * Añade un nuevo autor. El modelo se encarga de generar el ID.
+   * Añade un nuevo autor, verificando que no exista uno con el mismo nombre, el modelo genera el ID.
    * @param {object} newAuthorData - Los datos del nuevo autor.
    * @returns {string} La respuesta formateada.
    */
@@ -77,6 +78,15 @@ const AuthorsController = {
       if (!newAuthorData || !newAuthorData.name || !newAuthorData.nationality) {
         return ResponseFormatter.formatError('Faltan datos obligatorios (name, nationality).');
       }
+
+      // Buscamos si ya existe un autor con el mismo nombre (insensible a mayúsculas).
+      // findAuthorsByName devuelve una lista de coincidencias.
+      const existingAuthors = AuthorsModel.findAuthorsByName(newAuthorData.name);
+      if (existingAuthors.length > 0) {
+        // Si la lista no está vacía, el autor ya existe.
+        return ResponseFormatter.formatError(`Ya existe un autor con el nombre "${newAuthorData.name}".`);
+      }
+
       // Le pasamos los datos al Modelo para que los guarde.
       AuthorsModel.addAuthor(newAuthorData);
       return ResponseFormatter.formatSuccess('Autor añadido correctamente.', newAuthorData);
@@ -115,6 +125,12 @@ const AuthorsController = {
   deleteAuthor(id) {
     try {
       // --- VERIFICACIÓN DE RESTRICCIÓN ---
+      // Primero, verificamos si el autor que se quiere eliminar existe.
+      const authorExists = AuthorsModel.getAuthorById(id);
+      if (!authorExists) {
+        return ResponseFormatter.formatError(`No se encontró ningún autor con el ID ${id} para eliminar.`);
+      }
+
       // Buscamos si existen libros asociados a este autor.
       const booksByAuthor = BooksModel.findBooksByAuthorId(id);
 
@@ -136,8 +152,8 @@ const AuthorsController = {
         return ResponseFormatter.formatError(`No se encontró ningún autor con el ID ${id} para eliminar.`);
       }
     } catch (error) {
-      console.error('Error en deleteAuthor:', error);
-      return ResponseFormatter.formatError('Error al eliminar el autor.');
+      console.error('Error inesperado en deleteAuthor:', error);
+      return ResponseFormatter.formatError('Ocurrió un error inesperado al intentar eliminar el autor.');
     }
   }
 };

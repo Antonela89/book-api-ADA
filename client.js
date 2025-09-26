@@ -168,20 +168,47 @@ function askCategory(command) {
 
     // Una vez que tenemos la categoría, continuamos con el flujo original
     // Decide si es un comando de un paso o de varios (primero buscar y mostrar al usuario los datos y despues eliminar o editar)
-    if (command === 'listar' || command === 'agregar' || command === 'buscar') {
-      if (command === 'listar') {
-        const vowels = 'aeiou';
-        const lastChar = serverCategory.slice(-1);
-        const commandCategory = vowels.includes(lastChar) ? serverCategory + 's' : serverCategory + 'es';
-        client.write(`listar ${commandCategory}`);
+//     if (command === 'listar' || command === 'agregar' || command === 'buscar') {
+//       if (command === 'listar') {
+//         const vowels = 'aeiou';
+//         const lastChar = serverCategory.slice(-1);
+//         const commandCategory = vowels.includes(lastChar) ? serverCategory + 's' : serverCategory + 'es';
+//         client.write(`listar ${commandCategory}`);
+//       }
+//       if (command === 'agregar') askForNewItemData('agregar', serverCategory);
+//       if (command === 'buscar') askSearchTerm('buscar', serverCategory);
+//       if (command === 'ver') askForIdToView('ver', serverCategory);
+//     } else { // Para editar y eliminar
+//       initiateMultiStepProcess(command, serverCategory);
+//     }
+
+ const singleStepCommands = ['listar', 'buscar', 'ver', 'agregar'];
+
+    if (singleStepCommands.includes(command)) {
+      // Si el comando es de un solo paso, lo manejamos aquí
+      switch (command) {
+        case 'listar':
+          const vowels = 'aeiou';
+          const lastChar = serverCategory.slice(-1);
+          const commandCategory = vowels.includes(lastChar) ? serverCategory + 's' : serverCategory + 'es';
+          client.write(`listar ${commandCategory}`);
+          break;
+        case 'buscar':
+          askSearchTerm('buscar', serverCategory);
+          break;
+        case 'ver':
+          askForIdToView('ver', serverCategory);
+          break;
+        case 'agregar':
+          askForNewItemData('agregar', serverCategory);
+          break;
       }
-      if (command === 'agregar') askForNewItemData('agregar', serverCategory);
-      if (command === 'buscar') askSearchTerm('buscar', serverCategory);
-      if (command === 'ver') askForIdToView('ver', serverCategory);
-    } else { // Para editar y eliminar
+    } else {
+      // Si no, es un comando de varios pasos (editar, eliminar)
       initiateMultiStepProcess(command, serverCategory);
     }
   });
+
 }
 
 /**

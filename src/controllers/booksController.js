@@ -101,6 +101,12 @@ const BooksController = {
         return ResponseFormatter.formatError('Faltan datos obligatorios (titulo, autor, editorial, año de publicación, género).');
       }
 
+      // verificar si se repite titulo
+      const existingBooks = BooksModel.findBooksByTitle(title);
+      if (existingBooks.length > 0) {
+        return ResponseFormatter.formatError(`Ya existe un libro con el título "${title}".`);
+      }
+
       // Validar autor
       const authors = AuthorsModel.findAuthorsByName(authorName);
       if (authors.length === 0) return ResponseFormatter.formatError(`El autor "${authorName}" no existe.`);
@@ -134,7 +140,7 @@ const BooksController = {
         return ResponseFormatter.formatError("Para cambiar autor o editorial, debe eliminar y volver a crear el libro. Solo se permite actualizar título, año y género.");
       }
 
-      const success = BooksModel.updateBook(id, dataToUpdate);
+      const success = BooksModel.updateBook(id, updatedBook);
       if (success) {
         return ResponseFormatter.formatSuccess(`Libro con ID ${id} actualizado correctamente.`);
       } else {
