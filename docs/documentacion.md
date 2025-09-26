@@ -27,7 +27,9 @@ Esta es la implementación base, donde cada modelo (`authorsModel.js`, `booksMod
 *   **Ventajas:** Es un enfoque muy directo y fácil de entender. Cada archivo es autocontenido.
 *   **Desventajas:** Conduce a una significativa **duplicación de código**. La lógica para leer, escribir, actualizar y eliminar es casi idéntica en los tres archivos, violando el **principio DRY (Don't Repeat Yourself)**.
 
-<img src="./img/models-img/authors.png" alt="authorsModel.js" width="400"/> <img src="./img/models-img/publishers.png" alt="publishersModel.js" width="400"/>
+authorsModel.js           |  publishersModel.js
+:-------------------------:|:-------------------------:
+![](./img/models-img/authors.png)  |  ![](./img/models-img/publishers.png)
 
 ---
 
@@ -41,7 +43,10 @@ Este archivo es la base de la abstracción. Centraliza todas las operaciones de 
 *   **Responsabilidad Única:** Su única tarea es leer y escribir archivos JSON.
 *   **Robustez:** Incluye un manejo de errores robusto, como el control del caso `ENOENT` (archivo no encontrado).
 
+<figure>
 <img src="./img/models-img/utils.png" alt="utils.js"/>
+<figcaption>Archivo utils.js</figcaption>
+</figure>
 
 ---
 
@@ -51,7 +56,10 @@ Este archivo implementa el **patrón de diseño Factory**. Es una función que c
 *   **Eliminación de Duplicación:** Toda la lógica CRUD está escrita una sola vez.
 *   **Mantenibilidad:** Los cambios se hacen en un solo lugar y todos los modelos se benefician.
 
+<figure>
 <img src="./img/models-img/fabrica.png" alt="createDataModel.js"/>
+<figcaption>Archivo createDataModel.js</figcaption>
+</figure>
 
 ---
 
@@ -59,7 +67,10 @@ Este archivo implementa el **patrón de diseño Factory**. Es una función que c
 
 El resultado es que los modelos específicos se vuelven increíblemente simples y declarativos.
 
+<figure>
 <img src="./img/models-img/authors-ideal.png" alt="authors2.js"/>
+<figcaption>AuthorsModel usando una "plantilla" de modelos</figcaption>
+</figure>
 
 ---
 
@@ -72,8 +83,10 @@ La capa de Vistas se centraliza en `views/responseFormatter.js`, que se encarga 
     *   **Presentación Inteligente:** `formatSuccess()` detecta si los datos son un array (para mostrarlos como tabla) o un objeto (para mostrarlo como JSON).
     *   **Generación de Tablas Dinámicas:** La función `formatAsTable()` se adapta dinámicamente a cualquier tipo de dato, calculando el ancho de las columnas para una alineación perfecta.
 
+<figure>
 <img src="./img/views-img/listarLibros.png" alt="listarLibros"/>
-> **Pie de foto:** Ejemplo de la salida generada por `formatAsTable()`. La Vista se adapta dinámicamente para mostrar todas las columnas de los libros.
+<figcaption> Ejemplo de la salida generada por `formatAsTable()`. La Vista se adapta dinámicamente para mostrar todas las columnas de los libros.</figcaption>
+</figure>
 
 ---
 
@@ -86,12 +99,15 @@ La capa de Controladores es el **"cerebro"** de la aplicación, donde reside tod
     *   **Lógica de Negocio:** Implementan las reglas clave como la prevención de duplicados, la "hidratación" de datos (reemplazar IDs por nombres) y la restricción de eliminación.
     *   **Validación de Datos:** Se aseguran de que los datos de entrada sean completos y correctos.
 
+<figure>
 <img src="./img/controllers-img/deleteAuthors.png" alt="deleteAuthors"/>
-> **Pie de foto:** Implementación de la "restricción de eliminación". El controlador interactúa con `BooksModel` para asegurarse de que un autor no tenga libros asociados antes de proceder con su eliminación.
+<figcaption> Implementación de la "restricción de eliminación". El controlador interactúa con `BooksModel` para asegurarse de que un autor no tenga libros asociados antes de proceder con su eliminación.</figcaption>
+</figure>
 
-
+<figure>
 <img src="./img/controllers-img/addBook.png" alt="addBook"/>
-> **Pie de foto:** Ejemplo de lógica de negocio compleja. El método `addBook` valida duplicados y verifica que el autor y la editorial existan antes de guardar los datos.
+<figcaption> Ejemplo de lógica de negocio compleja. El método `addBook` valida duplicados y verifica que el autor y la editorial existan antes de guardar los datos.</figcaption>
+</figure>
 
 ---
 
@@ -105,8 +121,10 @@ Actúa como un **enrutador (router)** delgado y eficiente.
     *   Parsea los comandos entrantes para separar la acción de los datos.
     *   Delega toda la lógica de negocio a los controladores a través de un `switch` principal.
 
+<figure>
 <img src="./img/server-img/switch.png" alt="switch - funcion"/>
-> **Pie de foto:** El `switch` actúa como el enrutador central, delegando cada comando al método del controlador apropiado.
+<figcaption> El `switch` actúa como el enrutador central, delegando cada comando al método del controlador apropiado.</figcaption>
+</figure>
 
 ---
 
@@ -118,9 +136,10 @@ Es la puerta de entrada para el usuario final.
     *   **Flujos de Múltiples Pasos (Máquina de Estados):** Utiliza una variable de estado (`nextAction`) para manejar operaciones complejas como "Editar" y "Eliminar", donde primero se busca un ítem y luego se actúa sobre él.
     *   **Conexión Persistente:** Mantiene una única conexión con el servidor para mayor eficiencia.
 
-
+<figure>
 <img src="./img/client-img/maquina de estados.gif" alt="Flujo de Edición Interactivo"/>
-> **Pie de foto:** Ejemplo de la máquina de estados. Tras la búsqueda, el cliente recuerda que la acción pendiente es "editar" y procede a pedir el ID, creando un flujo de trabajo continuo.
+<figcaption> Ejemplo de la máquina de estados. Tras la búsqueda, el cliente recuerda que la acción pendiente es "editar" y procede a pedir el ID, creando un flujo de trabajo continuo.</figcaption>
+</figure>
 
 --- 
 
