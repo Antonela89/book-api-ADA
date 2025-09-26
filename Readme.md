@@ -6,14 +6,14 @@ La aplicación sigue el patrón de diseño **Modelo-Vista-Controlador (MVC)** pa
 
 ## ✨ Características Principales
 
-*   **Gestión CRUD Completa:** Soporte para Crear, Leer (listar y ver por ID), Actualizar y Eliminar para tres categorías: Autores, Libros y Editoriales.
-*   **Cliente de Consola Interactivo:** Interfaz de usuario amigable con menús numéricos que guía al usuario a través de todas las operaciones, eliminando la necesidad de escribir comandos complejos o JSON.
-*   **Persistencia de Datos:** La información se almacena en archivos `.json` locales.
-*   **Búsqueda Inteligente:** Búsqueda parcial e insensible a mayúsculas y minúsculas.
-*   **Reglas de Negocio Robustas:**
-    *   **Prevención de Duplicados:** No permite agregar autores, libros o editoriales con nombres/títulos idénticos.
-    *   **Restricción de Eliminación:** Protege la integridad de los datos impidiendo que se elimine un autor o editorial si tienen libros asociados.
-*   **Script de Pruebas Automatizado:** Incluye un script (`test.js`) que ejecuta una secuencia de pruebas para verificar la funcionalidad completa del CRUD y las reglas de negocio.
+- **Gestión CRUD Completa:** Soporte para Crear, Leer (listar y ver por ID), Actualizar y Eliminar para tres categorías: Autores, Libros y Editoriales.
+- **Cliente de Consola Interactivo:** Interfaz de usuario amigable con menús numéricos que guía al usuario a través de todas las operaciones, eliminando la necesidad de escribir comandos complejos o JSON.
+- **Persistencia de Datos:** La información se almacena en archivos `.json` locales.
+- **Búsqueda Inteligente:** Búsqueda parcial e insensible a mayúsculas y minúsculas.
+- **Reglas de Negocio Robustas:**
+  - **Prevención de Duplicados:** No permite agregar autores, libros o editoriales con nombres/títulos idénticos.
+  - **Restricción de Eliminación:** Protege la integridad de los datos impidiendo que se elimine un autor o editorial si tienen libros asociados.
+- **Script de Pruebas Automatizado:** Incluye un script (`test.js`) que ejecuta una secuencia de pruebas para verificar la funcionalidad completa del CRUD y las reglas de negocio.
 
 ---
 
@@ -21,15 +21,16 @@ La aplicación sigue el patrón de diseño **Modelo-Vista-Controlador (MVC)** pa
 
 El proyecto está estructurado siguiendo el patrón **Modelo-Vista-Controlador (MVC)**.
 
-*   **`models/` (Modelo):** La capa de datos, responsable de interactuar directamente con los archivos `json`.
-*   **`views/` (Vista):** La capa de presentación (`responseFormatter.js`), responsable de formatear los datos para la terminal.
-*   **`controllers/` (Controlador):** El "cerebro" de la aplicación. Contiene la lógica de negocio y orquesta el flujo entre el Modelo y la Vista.
-*   **`server.js`:** Actúa como el enrutador. Escucha las conexiones TCP y delega las peticiones al controlador adecuado.
-*   **`client.js`:** La interfaz de usuario. Mantiene una conexión persistente y proporciona un menú interactivo.
+- **`models/` (Modelo):** La capa de datos, responsable de interactuar directamente con los archivos `json`.
+- **`views/` (Vista):** La capa de presentación (`responseFormatter.js`), responsable de formatear los datos para la terminal.
+- **`controllers/` (Controlador):** El "cerebro" de la aplicación. Contiene la lógica de negocio y orquesta el flujo entre el Modelo y la Vista.
+- **`server.js`:** Actúa como el enrutador. Escucha las conexiones TCP y delega las peticiones al controlador adecuado.
+- **`client.js`:** La interfaz de usuario. Mantiene una conexión persistente y proporciona un menú interactivo.
 
 ### Principio DRY y Reutilización de Código
 
 Se exploraron dos enfoques para la capa de Modelo:
+
 1.  **Modelos Autónomos:** Funcional pero con duplicación de código.
 2.  **Fábrica de Modelos (Enfoque Ideal):** La solución implementada utiliza un módulo de utilidades (`src/utils/`) y una "fábrica" (`src/models/createDataModel.js`) para centralizar la lógica CRUD, adhiriéndose estrictamente al principio **DRY (Don't Repeat Yourself)**.
 
@@ -79,8 +80,8 @@ Sigue estos pasos para poner en marcha el proyecto.
 
 ### Prerrequisitos
 
-*   [Node.js](https://nodejs.org/) (versión 18 o superior recomendada)
-*   npm (incluido con Node.js)
+- [Node.js](https://nodejs.org/) (versión 18 o superior recomendada)
+- npm (incluido con Node.js)
 
 ### Pasos
 
@@ -111,11 +112,13 @@ En tu primera terminal, ejecuta el siguiente comando.
 ```bash
 npm start
 ```
+
 o alternativamente:
 
 ```bash
 node server.js
 ```
+
 Verás un mensaje de confirmación: `Servidor TCP escuchando en el puerto 8080`.
 
 ### 2. Iniciar el Cliente Interactivo
@@ -125,6 +128,7 @@ En una **segunda terminal**, ejecuta el siguiente comando para conectarte al ser
 ```bash
 node client.js
 ```
+
 Aparecerá el menú principal para empezar a interactuar con la aplicación.
 
 ---
@@ -146,9 +150,13 @@ El proyecto incluye un script que prueba automáticamente el ciclo CRUD y las re
 
 ## 🛠️ Tecnologías Usadas
 
-<p>
-  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript"/>
+<img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript"/>
   <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js"/>
+  <img src="https://img.shields.io/badge/TCP%20(Net%20Module)-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Módulo Net"/>
+  <img src="https://img.shields.io/badge/Console%20I/O%20(Readline)-52994B?style=for-the-badge&logo=node.js&logoColor=white" alt="Módulo Readline"/>
+  <img src="https://img.shields.io/badge/JSON-000000?style=for-the-badge&logo=json&logoColor=white" alt="JSON"/>
+  <img src="https://img.shields.io/badge/OOP_(POO)-F05032?style=for-the-badge&logo=java&logoColor=white" alt="Programación Orientada a Objetos"/>
+  <img src="https://img.shields.io/badge/UUID-6B5B95?style=for-the-badge&logo=uuid&logoColor=white" alt="UUID"/>
   <img src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white" alt="Git"/>
   <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"/>
 </p>
@@ -157,10 +165,10 @@ El proyecto incluye un script que prueba automáticamente el ciclo CRUD y las re
 
 ## 🧑‍💻 Autoras
 
-| Nombre               | LinkedIn                                                    | GitHub                                         |
-| -------------------- | ----------------------------------------------------------- | ---------------------------------------------- |
-| **BORGOGNO, Antonela** | [antonela-borgogno](https://www.linkedin.com/in/antonela-borgogno/) | [Antonela89](https://github.com/Antonela89)     |
-| **MARTINEZ, Gabriela** | [magamahe](https://www.linkedin.com/in/magamahe/)           | [magamahe](https://github.com/magamahe)         |
+| Nombre                 | LinkedIn                                                            | GitHub                                      |
+| ---------------------- | ------------------------------------------------------------------- | ------------------------------------------- |
+| **BORGOGNO, Antonela** | [antonela-borgogno](https://www.linkedin.com/in/antonela-borgogno/) | [Antonela89](https://github.com/Antonela89) |
+| **MARTINEZ, Gabriela** | [magamahe](https://www.linkedin.com/in/magamahe/)                   | [magamahe](https://github.com/magamahe)     |
 
 ---
 
@@ -174,5 +182,3 @@ El proyecto incluye un script que prueba automáticamente el ciclo CRUD y las re
   <br>
   Proyecto educativo sin fines comerciales. Todos los derechos reservados © 2025.
 </p>
-
-
