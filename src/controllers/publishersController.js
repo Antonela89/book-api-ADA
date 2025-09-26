@@ -1,28 +1,30 @@
-// Este archivo es el "Controlador" de Editoriales. Al igual que el de autores, es un intermediario que conecta las peticiones con el Modelo de Editoriales y la Vista.
+// Este archivo es el "Controlador" de Editoriales. Actúa como un intermediario,
+// conectando las peticiones con el Modelo de Editoriales y la Vista.
+// Implementa las reglas de negocio, como la prevención de duplicados y la restricción de eliminación.
 
-import { PublishersModel } from '../models/publishersModel.js'; // Importación de objeto model
+import { PublishersModel } from '../models/publishersModel.js';
 import { BooksModel } from '../models/booksModel.js';
-import { ResponseFormatter } from '../views/responseFormatter.js'; // importacion de objeto views
+import { ResponseFormatter } from '../views/responseFormatter.js';
 
-//// Creamos el objeto para agrupar todas los métodos relacionadas con editoriales.
+// Creamos el objeto para agrupar todos los métodos relacionados con editoriales.
 const PublishersController = {
   /**
-   * Obtiene todos las editoriales y devuelve la respuesta formateada.
-   * @returns {string} La respuesta formateada como un string.
+   * Obtiene todas las editoriales.
+   * @returns {string} La respuesta formateada.
    */
   getAllPublishers() {
     try {
       const publishers = PublishersModel.getPublishers();
       return ResponseFormatter.formatSuccess('Lista de editoriales obtenida.', publishers);
     } catch (error) {
-      console.error('Error en getPublishers:', error);
+      console.error('Error en getAllPublishers:', error);
       return ResponseFormatter.formatError('No se pudo obtener la lista de editoriales.');
     }
   },
 
   /**
-   * Obtiene una lista de editoriales por su nombre y devuelve la respuesta formateada.
-   * @param {string} name El nombre del editorial a buscar.
+   * Busca editoriales por nombre.
+   * @param {string} name - El nombre de la editorial a buscar.
    * @returns {string} La respuesta formateada.
    */
   getPublishersByName(name) {
@@ -40,10 +42,10 @@ const PublishersController = {
   },
 
   /**
-  * Obtiene una única editorial por su ID.
-  * @param {string} id - El ID de la editorial a buscar.
-  * @returns {string} Una cadena de texto con la respuesta.
-  */
+   * Obtiene una única editorial por su ID.
+   * @param {string} id - El ID de la editorial a buscar.
+   * @returns {string} La respuesta formateada.
+   */
   getPublisherById(id) {
     try {
       const publisher = PublishersModel.getPublisherById(id);
@@ -59,35 +61,33 @@ const PublishersController = {
   },
 
   /**
-   * Añade una nueva editorial y devuelve la respuesta formateada.
+   * Añade una nueva editorial, validando datos y previniendo duplicados.
    * @param {object} newPublisherData - Los datos de la nueva editorial.
-   * @returns {string} La respuesta formateada como un string.
+   * @returns {string} La respuesta formateada.
    */
   addPublisher(newPublisherData) {
     try {
-      // 1. Acceso a los datos: Busca las claves en MAYÚSCULAS o minúsculas.
+      // Normalizamos los datos de entrada.
       const rawName = newPublisherData.NAME || newPublisherData.name;
       const rawCountry = newPublisherData.COUNTRY || newPublisherData.country;
 
-      // 2. Validación de que existan los datos
       if (!rawName || !rawCountry) {
         return ResponseFormatter.formatError('Faltan datos obligatorios (name, country).');
       }
 
-      const existingPublishers = PublishersModel.findPublishersByName(newPublisherData.name);
-      if (existingPublishers.length > 0) {
-        return ResponseFormatter.formatError(`Ya existe una editorial con el nombre "${newPublisherData.name}".`);
-      }
-
-      PublishersModel.addPublisher(newPublisherData);
-      return ResponseFormatter.formatSuccess('Editorial añadida correctamente.', newPublisherData);
-      
-      // 3. Crear el objeto final con las claves en minúsculas (lo que el modelo espera).
-      const publisherToSave = { 
-          name: rawName.toLowerCase(), 
-          country: rawCountry.toLowerCase() 
+      // Creamos el objeto final con valores normalizados.
+      const publisherToSave = {
+        name: rawName.toLowerCase(),
+        country: rawCountry.toLowerCase()
       };
 
+      // Regla de negocio: verificamos si ya existe.
+      const existingPublishers = PublishersModel.findPublishersByName(publisherToSave.name);
+      if (existingPublishers.length > 0) {
+        return ResponseFormatter.formatError(`Ya existe una editorial con el nombre "${publisherToSave.name}".`);
+      }
+
+      // Pasamos el objeto limpio al Modelo.
       PublishersModel.addPublisher(publisherToSave);
       return ResponseFormatter.formatSuccess('Editorial añadida correctamente.', publisherToSave);
     } catch (error) {
@@ -97,14 +97,28 @@ const PublishersController = {
   },
 
   /**
-   * Actualiza un editorial existente.
-   * @param {string} id El id del editorial a actualizar.
-   * @param {object} updatedPublisher Los nuevos datos para el editorial.
+   * Actualiza una editorial existente por su ID.
+   * @param {string} id - El ID de la editorial a actualizar.
+   * @param {object} updatedPublisherData - Los nuevos datos para la editorial.
    * @returns {string} La respuesta formateada.
    */
-  updatePublisher(id, updatedPublisher) {
+  updatePublisher(id, updatedPublisherData) {
     try {
-      const success = PublishersModel.updatePublisher(id, updatedPublisher);
+      // Filtramos y normalizamos los datos de entrada.
+      const dataToUpdate = {};
+      const rawName = updatedPublisherData.NAME || updatedPublisherData.name;
+      if (rawName) dataToUpdate.name = rawName.toLowerCase();
+
+      const rawCountry = updatedPublisherData.COUNTRY || updatedPublisherData.country;
+      if (rawCountry) dataToUpdate.country = rawCountry.toLowerCase();
+
+      // Regla de negocio: si no se pasaron datos válidos, devolvemos un error.
+      if (Object.keys(dataToUpdate).length === 0) {
+        return ResponseFormatter.formatError(`No se proporcionaron datos válidos (name, country) para actualizar.`);
+      }
+
+      // Le pasamos al Modelo el objeto 'dataToUpdate' con los datos ya filtrados.
+      const success = PublishersModel.updatePublisher(id, dataToUpdate);
       if (success) {
         return ResponseFormatter.formatSuccess(`Editorial con ID ${id} actualizada correctamente.`);
       } else {
@@ -117,38 +131,38 @@ const PublishersController = {
   },
 
   /**
- * Elimina una editorial por su ID, solo si no tiene libros asociados.
- * @param {string} id - El ID de la editorial a eliminar.
- * @returns {string} La respuesta formateada.
- */
+   * Elimina una editorial por su ID, solo si no tiene libros asociados.
+   * @param {string} id - El ID de la editorial a eliminar.
+   * @returns {string} La respuesta formateada.
+   */
   deletePublisher(id) {
     try {
-      // verificar la existencia de la editorial
+      // Primero, verificamos si la editorial existe.
       const publisherExists = PublishersModel.getPublisherById(id);
       if (!publisherExists) {
         return ResponseFormatter.formatError(`No se encontró ninguna editorial con el ID ${id} para eliminar.`);
       }
-      // --- VERIFICACIÓN DE RESTRICCIÓN ---
+      
+      // Regla de negocio: buscamos si existen libros asociados.
       const booksByPublisher = BooksModel.findBooksByPublisherId(id);
 
+      // Si hay libros, aplicamos la restricción y no permitimos la eliminación.
       if (booksByPublisher.length > 0) {
         return ResponseFormatter.formatError(
-          `No se puede eliminar la editorial con ID ${id} porque tiene ${booksByPublisher.length} libro(s) asociado(s).`
+          `No se puede eliminar la editorial "${publisherExists.name}" porque tiene ${booksByPublisher.length} libro(s) asociado(s).`
         );
       }
-      // ------------------------------------------
-
-      // --- PROCEDER CON LA ELIMINACIÓN ---
+      
+      // Si no hay libros, procedemos a eliminar.
       const success = PublishersModel.deletePublisher(id);
-
       if (success) {
-        return ResponseFormatter.formatSuccess(`Editorial con ID ${id} ha sido eliminada.`);
+        return ResponseFormatter.formatSuccess(`La editorial "${publisherExists.name}" (ID: ${id}) ha sido eliminada.`);
       } else {
         return ResponseFormatter.formatError(`No se encontró ninguna editorial con el ID ${id} para eliminar.`);
       }
     } catch (error) {
-      console.error('Error en deletePublisher:', error);
-      return ResponseFormatter.formatError('Error al eliminar la editorial.');
+      console.error('Error inesperado en deletePublisher:', error);
+      return ResponseFormatter.formatError('Ocurrió un error inesperado al intentar eliminar la editorial.');
     }
   }
 };

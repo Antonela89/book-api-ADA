@@ -1,24 +1,25 @@
 // Este es el archivo principal del CLIENTE. Es la interfaz con la que interactúa el usuario.
+// Su trabajo es mostrar menús, pedir datos, construir los comandos y enviarlos al servidor.
+// También se encarga de recibir las respuestas del servidor y mostrarlas.
 
 // importaciones
 import net from 'net';
 import readline from 'readline';
 
-// configuracion del cliente
+// configuración
 const PORT = 8080;
 const HOST = '127.0.0.1';
 
-// creamos la instancia del cliente
+// creacion del cliente
 const client = new net.Socket();
-// creamos la interfaz para leer y escribir en la consola.
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
 
-// Manejo de estado del cliente
-let isInitialConnection = true; // bandera -> manejar el primer mensaje de bienvenida.
-let nextAction = null; // Variable de estado para recordar flujos de varios pasos (editar/eliminar).
+// --- MANEJO DE ESTADO DEL CLIENTE ---
+let isInitialConnection = true; // Flag para manejar el primer mensaje de bienvenida.
+let nextAction = null; // Variable de estado para recordar flujos de varios pasos.
 
 /**
  * Función central que maneja TODAS las respuestas recibidas del servidor.
@@ -41,28 +42,27 @@ function handleServerResponse(data) {
     console.log(response);
     console.log('---------------------------------------');
 
+    const currentAction = nextAction;
+    nextAction = null;
+
     // Si la búsqueda falló, detenemos el flujo y volvemos al menú.
     if (response.startsWith('❌ Error:')) {
       console.log('\nLa búsqueda no produjo resultados. Volviendo al menú principal.');
-      nextAction = null; 
-      setTimeout(showMenu, 500); 
-      return; 
+      setTimeout(showMenu, 500);
+      return;
     }
 
     // Si la búsqueda tuvo éxito, pedimos el ID para la acción final.
     rl.question('Ingresa el ID (completo) del elemento que deseas modificar: ', (id) => {
       if (!id.trim()) {
-        console.log('ID no ingresado. Volviendo al menú principal.');
-        nextAction = null;
+        console.log('\nOperación cancelada. Volviendo al menú principal.');
         showMenu();
         return;
       }
       
-      const { command, serverCategory } = nextAction;
-      nextAction = null; // Limpiar el estado después de obtener el ID.
-
-      // Ejecutar la acción final (PUT o DELETE) con el ID.
-      // Aquí solo limpiamos el ID (id.trim()), el servidor se encarga de toLowerCase().
+      const { command, serverCategory } = currentAction;
+      
+      // Ejecuta la acción final (PUT o DELETE) con el ID.
       if (command === 'PUT') {
         if (serverCategory === 'AUTHOR') askForUpdatedAuthorData(id.trim());
         else if (serverCategory === 'BOOK') askForUpdatedBookData(id.trim());
@@ -72,17 +72,17 @@ function handleServerResponse(data) {
       }
     });
 
-    return; // Ya hemos procesado la respuesta dentro del flujo nextAction.
+    return; // Salimos porque ya hemos manejado la respuesta dentro de este flujo.
   }
   
-  // Para comandos de un solo paso (GET, POST, etc.)
+  // Para respuestas a comandos de un solo paso, simplemente mostramos y volvemos al menú.
   console.log('\n--- Respuesta del Servidor ---');
   console.log(response);
   console.log('------------------------------');
   setTimeout(showMenu, 500);
 }
 
-// manejo de eventos del cliente
+// --- MANEJO DE EVENTOS DEL CLIENTE ---
 client.connect(PORT, HOST, () => console.log('Conectado al servidor de la Biblioteca.'));
 client.on('data', handleServerResponse);
 client.on('close', () => {
@@ -95,154 +95,126 @@ client.on('error', (err) => {
   process.exit(1);
 });
 
-// Interfaz de Usuario
+// --- LÓGICA DE LA INTERFAZ DE USUARIO ---
+
 /**
  * Muestra el menú principal de opciones.
  */
 function showMenu() {
   console.log('\n--- MENÚ PRINCIPAL ---');
-  // Se separan las opciones de búsqueda para eliminar la ambigüedad en el servidor
-  console.log('1. Listar todos (GET /<CATEGORY>S)');
-  console.log('2. Buscar por TÉRMINO/Nombre (GET <CATEGORY> <TERM>)'); // Nuevo: solo por término
-  console.log('3. Buscar por ID (GET <CATEGORY> <ID>)');             // Nuevo: solo por ID
-  console.log('4. Agregar (POST <CATEGORY>)');                       // Opción 3 anterior -> 4
-  console.log('5. Editar (PUT <CATEGORY>)');                         // Opción 4 anterior -> 5
-  console.log('6. Eliminar (DELETE <CATEGORY>)');                     // Opción 5 anterior -> 6
-  console.log('0. Salir (EXIT)');
+  console.log('1. Listar todo');
+  console.log('2. Buscar por término');
+  console.log('3. Ver por ID');
+  console.log('4. Agregar');
+  console.log('5. Editar');
+  console.log('6. Eliminar');
+  console.log('7. Ayuda');
+  console.log('0. Salir');
   console.log('----------------------\n');
 
   rl.question('Selecciona una opción: ', (option) => {
     switch (option.trim()) {
-      case '1': askCategory('GET_ALL'); break; 
-      case '2': askCategory('GET_TERM'); break;    // Nuevo comando
-      case '3': askCategory('GET_ID'); break;      // Nuevo comando
-      case '4': askCategory('POST'); break; 
-      case '5': askCategory('PUT'); break; 
-      case '6': askCategory('DELETE'); break; 
+      case '1': askCategory('GET_ALL'); break;
+      case '2': askCategory('SEARCH'); break;
+      case '3': askCategory('GET_ID'); break;
+      case '4': askCategory('POST'); break;
+      case '5': askCategory('PUT'); break;
+      case '6': askCategory('DELETE'); break;
+      case '7': client.write('HELP'); break;
       case '0': client.write('EXIT'); break;
-      default:
-        console.log('Opción no válida. Inténtalo de nuevo.');
-        showMenu();
-        break;
+      default: console.log('Opción no válida.'); showMenu(); break;
     }
   });
 }
 
 /**
  * Muestra un sub-menú para que el usuario elija la categoría.
- * @param {string} command - La acción principal seleccionada (GET_ALL, GET_TERM, GET_ID, POST, PUT, DELETE).
+ * @param {string} command - La acción principal seleccionada (GET_ALL, SEARCH, etc.).
  */
 function askCategory(command) {
   console.log('\n--- SELECCIONA UNA CATEGORÍA ---');
-  console.log('1. Autor (AUTHOR)');
-  console.log('2. Libro (BOOK)');
-  console.log('3. Editorial (PUBLISHER)');
-  console.log('4. Volver al menú principal');
+  console.log('1. Autor');
+  console.log('2. Libro');
+  console.log('3. Editorial');
+  console.log('4. Volver al menú');
   console.log('--------------------------------');
 
   rl.question('Elige una categoría (1-4): ', (option) => {
-    let serverCategory = '';
-    let clientCategory = ''; // Nombre en español para los prompts.
+    let serverCategory = '', clientCategory = '';
     switch (option.trim()) {
-      case '1': 
-        serverCategory = 'AUTHOR'; 
-        clientCategory = 'autor'; 
-        break;
-      case '2': 
-        serverCategory = 'BOOK'; 
-        clientCategory = 'libro'; 
-        break;
-      case '3': 
-        serverCategory = 'PUBLISHER'; 
-        clientCategory = 'editorial'; 
-        break;
-      case '4':
-        showMenu(); 
-        return;
-      default:
-        console.log('Opción de categoría no válida.');
-        showMenu();
-        return;
+      case '1': serverCategory = 'AUTHOR'; clientCategory = 'autor'; break;
+      case '2': serverCategory = 'BOOK'; clientCategory = 'libro'; break;
+      case '3': serverCategory = 'PUBLISHER'; clientCategory = 'editorial'; break;
+      case '4': showMenu(); return;
+      default: console.log('Opción no válida.'); showMenu(); return;
     }
 
-    // Lógica de Flujo
+    // Enrutamos al siguiente paso según el comando seleccionado.
     if (command === 'GET_ALL') {
-      // GET AUTHORS, GET BOOKS, GET PUBLISHERS
-      client.write(`GET ${serverCategory}S`);
-    } else if (command === 'GET_TERM') {
-      // Opción 2: Buscar por término (false = no es ID)
-      askForTermOrIdToView('GET', serverCategory, clientCategory, false);
+      client.write(`GET ${serverCategory}S`); // GET AUTHORS, BOOKS, PUBLISHERS
+    } else if (command === 'SEARCH') {
+      askForTerm('SEARCH', serverCategory, clientCategory);
     } else if (command === 'GET_ID') {
-      // Opción 3: Buscar por ID (true = es ID)
-      askForTermOrIdToView('GET', serverCategory, clientCategory, true);
+      askForId('GET', serverCategory, clientCategory);
     } else if (command === 'POST') {
-      // POST <CATEGORY> <JSON>
-      askForNewItemData('POST', serverCategory, clientCategory);
-    } else { 
-      // PUT o DELETE: Inicia el flujo de dos pasos (primero busca con GET)
+      askForNewItemData(serverCategory, clientCategory);
+    } else { // PUT o DELETE inician el flujo de varios pasos
       initiateMultiStepProcess(command, serverCategory, clientCategory);
     }
   });
-
 }
 
 /**
- * Pide un ID o un término de búsqueda, dependiendo del modo.
- * Reemplaza la antigua askForIdOrTermToView.
- * @param {string} command - La acción principal ('GET').
- * @param {string} serverCategory - La categoría (AUTHOR, BOOK, etc.).
- * @param {string} clientCategory - El nombre local de la categoría ('autor', 'libro', etc.).
- * @param {boolean} isIdSearch - Si es true, pide un ID. Si es false, pide un término/nombre.
+ * Pide un término de búsqueda para un comando 'SEARCH'.
+ * @param {string} command - El comando ('SEARCH').
+ * @param {string} serverCategory - La categoría para el servidor (ej. 'AUTHOR').
+ * @param {string} clientCategory - La categoría para el usuario (ej. 'autor').
  */
-function askForTermOrIdToView(command, serverCategory, clientCategory, isIdSearch) {
-  let prompt;
-  if (isIdSearch) {
-    prompt = `Ingresa el ID completo del ${clientCategory} a buscar: `;
-  } else if (clientCategory === 'libro') {
-    prompt = 'Ingresa el Título o Término de Búsqueda: ';
-  } else {
-    prompt = 'Ingresa el Nombre o Término de Búsqueda: ';
-  }
-  
+function askForTerm(command, serverCategory, clientCategory) {
+  const prompt = clientCategory === 'libro' ? 'Ingresa el Título a buscar: ' : 'Ingresa el Nombre a buscar: ';
   rl.question(prompt, (term) => {
-    if (term.trim()) {
-      // Envía: GET AUTHOR <ID> o GET AUTHOR <TERM>
-      client.write(`${command} ${serverCategory} ${term.trim()}`);
-    } else {
-      console.log('El parámetro no puede estar vacío.');
-      showMenu();
-    }
+    if (term.trim()) client.write(`${command} ${serverCategory} ${term.trim()}`);
+    else { console.log('El término no puede estar vacío.'); showMenu(); }
   });
 }
 
 /**
- * Inicia un flujo de varios pasos pidiendo un término de búsqueda (PUT/DELETE).
+ * Pide un ID para un comando 'GET' por ID.
+ * @param {string} command - El comando ('GET').
+ * @param {string} serverCategory - La categoría para el servidor.
+ * @param {string} clientCategory - La categoría para el usuario.
+ */
+function askForId(command, serverCategory, clientCategory) {
+  rl.question(`Ingresa el ID del/de la ${clientCategory} a ver: `, (id) => {
+    if (id.trim()) client.write(`${command} ${serverCategory} ${id.trim()}`);
+    else { console.log('El ID no puede estar vacío.'); showMenu(); }
+  });
+}
+
+/**
+ * Inicia un flujo de varios pasos (PUT/DELETE) pidiendo un término de búsqueda.
+ * @param {string} command - El comando original ('PUT' o 'DELETE').
+ * @param {string} serverCategory - La categoría para el servidor.
+ * @param {string} clientCategory - La categoría para el usuario.
  */
 function initiateMultiStepProcess(command, serverCategory, clientCategory) {
   const actionText = command === 'PUT' ? 'editar' : 'eliminar';
   const categoryText = clientCategory === 'libro' ? 'título' : 'nombre';
-  
   rl.question(`Ingresa el ${categoryText} a buscar (para ${actionText} después): `, (term) => {
-    if (!term.trim()) {
-      console.log('Búsqueda cancelada. Volviendo al menú principal.');
-      showMenu();
-      return;
-    }
-    
-    // 1. Guardar la acción real (PUT/DELETE) y la categoría para el segundo paso.
-    nextAction = { command, serverCategory }; 
-    
-    // 2. Enviar SIEMPRE el comando de BÚSQUEDA (GET) para el primer paso.
-    client.write(`GET ${serverCategory} ${term.trim()}`);
+    if (!term.trim()) { console.log('Búsqueda cancelada.'); showMenu(); return; }
+    // 1. Guardamos la acción final que queremos hacer.
+    nextAction = { command, serverCategory, clientCategory };
+    // 2. Enviamos un comando SEARCH para el primer paso.
+    client.write(`SEARCH ${serverCategory} ${term.trim()}`);
   });
 }
 
-// Funciones para pedir datos (mantienen el envío de POST/PUT en inglés)
+// --- FUNCIONES PARA PEDIR DATOS ---
+// (Estas funciones piden los datos al usuario y construyen el comando final)
 
 function askForNewItemData(command, serverCategory) {
-  // Simplificado para el ejemplo. En tu código completo, asegúrate de que use las categorías en español para los prompts.
   const category = serverCategory.toLowerCase();
-  
+
   if (category === 'author') {
     const newData = {};
     rl.question('Nombre del autor: ', (name) => {

@@ -1,274 +1,161 @@
-// Este es el archivo principal del SERVIDOR.
+// Este es el archivo principal del SERVIDOR. Su trabajo es escuchar las conexiones de los clientes
+// y actuar como un "enrutador" o "cartero". No contiene lógica de negocio, solo dirige
+// las peticiones al controlador adecuado.
 
-//  importaciones
+// --- IMPORTACIONES ---
+// Módulo 'net' de Node.js, que nos permite crear servidores y clientes TCP.
 import net from "net";
+// Importamos todos nuestros controladores, que son los que contienen la lógica de negocio.
 import { AuthorsController } from "./src/controllers/authorsController.js";
 import { BooksController } from "./src/controllers/booksController.js";
 import { PublishersController } from "./src/controllers/publishersController.js";
+// Importamos nuestra vista para formatear respuestas de error de manera consistente.
 import { ResponseFormatter } from "./src/views/responseFormatter.js";
 
-// configuraciones
-const PORT = 8080;
+// --- CONFIGURACIÓN DEL SERVIDOR ---
+const PORT = 8080; // El "puerto" es como una puerta numerada en la que el servidor espera a los clientes.
 
+// net.createServer() crea el servidor. La función que le pasamos se ejecutará
+// CADA VEZ que un nuevo cliente se conecte.
 const server = net.createServer((socket) => {
+  // 'socket' es el objeto que representa la conexión única y directa con UN cliente.
   const clientIdentifier = `[${socket.remoteAddress}:${socket.remotePort}]`;
   console.log(`Cliente conectado: ${clientIdentifier}`);
-  socket.write("¡Bienvenido a la Biblioteca Virtual!\n"); // manejo de eventos
+  socket.write("¡Bienvenido a la Biblioteca Virtual!\n");
 
+  // --- MANEJO DE EVENTOS DEL SOCKET ---
+
+  // El evento 'data' se dispara cada vez que el cliente envía un mensaje.
   socket.on("data", (data) => {
-    // CONVERTIMOS TODO EL MENSAJE A MAYÚSCULAS PARA NORMALIZAR LOS COMANDOS
-    const message = data.toString().trim().toUpperCase();
-    console.log(`${clientIdentifier} Comando recibido: "${message}"`); // --- LÓGICA DE PARSEO DE COMANDOS ---
+    // Convertimos los datos crudos (Buffer) a un string limpio.
+    const message = data.toString().trim();
+    console.log(`${clientIdentifier} Comando recibido: "${message}"`);
 
+    // --- LÓGICA DE PARSEO DE COMANDOS ---
+    // Esta lógica separa la parte del comando (ej: "PUT AUTHOR <id>") de los datos JSON.
     const firstBraceIndex = message.indexOf("{");
-    let commandPart;
-    let jsonDataString = null;
+    let commandPart, jsonDataString = null;
 
-    if (firstBraceIndex === -1) {
-      commandPart = message;
-    } else {
+    if (firstBraceIndex !== -1) {
+      // Si hay un '{', dividimos el mensaje en dos partes.
       commandPart = message.substring(0, firstBraceIndex).trim();
       jsonDataString = message.substring(firstBraceIndex);
+    } else {
+      // Si no hay '{', todo el mensaje es el comando.
+      commandPart = message;
     }
 
-    const fullCommandParts = commandPart.split(" ");
-    const [command, category] = fullCommandParts; // thirdParam será el ID o el Término de búsqueda (incluyendo espacios si hay)
-
-    let thirdParam = fullCommandParts.slice(2).join(" ");
-
-    // 🔥 CORRECCIÓN FINAL Y CRÍTICA: Cambiamos a 'let' y limpiamos los espacios al final (trim()).
-    // Esto resuelve el problema de los IDs copiados con espacios residuales.
-    thirdParam = thirdParam.trim();
+    // NORMALIZAMOS SOLO LA PARTE DEL COMANDO A MAYÚSCULAS para que sea case-insensitive.
+    const commandParts = commandPart.toUpperCase().split(" ");
+    const [method, category, ...params] = commandParts;
+    // Unimos el resto de los parámetros para permitir términos de búsqueda con espacios (ej: "Cien años de soledad").
+    const param1 = params.join(" ");
 
     let response = "";
 
+    // Usamos un 'try...catch' como red de seguridad. Si algo inesperado falla, el servidor no se caerá.
     try {
-      // El 'switch' actúa como el enrutador principal de nuestra API.
-      switch (command) {
-        case "GET": // Maneja: Listar todos, Ver por ID y Buscar por término.
-          if (category.endsWith("S")) {
-            // 1. GET AUTHORS, GET BOOKS, etc. (Listar todos)
-            if (category === "AUTHORS")
-              response = AuthorsController.getAllAuthors();
-            else if (category === "BOOKS")
-              response = BooksController.getAllBooks();
-            else if (category === "PUBLISHERS")
-              response = PublishersController.getAllPublishers();
-            else
-              response = ResponseFormatter.formatError(
-                `Comando GET / Categoría no válida: "${category}".`
-              );
-          } else if (
-            category === "AUTHOR" ||
-            category === "BOOK" ||
-            category === "PUBLISHER"
-          ) {
-            // 2. GET <CATEGORY> <ID/TERM>
-            if (!thirdParam) {
-              response = ResponseFormatter.formatError(
-                `Falta el ID o el término de búsqueda para GET ${category}.`
-              );
-              break;
-            } // Ahora solo necesitamos .toLowerCase() porque thirdParam ya está .trim()
-
-            const normalizedParam = thirdParam.toLowerCase(); // 1. Intentamos GET por ID primero, usando el parámetro normalizado.
-
-            let itemByIdResponse = null;
-            if (category === "AUTHOR")
-              itemByIdResponse =
-                AuthorsController.getAuthorById(normalizedParam);
-            else if (category === "BOOK")
-              itemByIdResponse = BooksController.getBookById(normalizedParam);
-            else if (category === "PUBLISHER")
-              itemByIdResponse =
-                PublishersController.getPublisherById(normalizedParam); // Si el resultado por ID es un éxito (no tiene el mensaje de error de "no encontrado"), lo devolvemos.
-
-            if (itemByIdResponse && itemByIdResponse.startsWith("✅ Éxito:")) {
-              response = itemByIdResponse;
-            } else {
-              // 2. Si falló la búsqueda por ID (porque no existe o es inválido), asumimos que es un término de búsqueda.
-              const searchTerm = normalizedParam; // Ya está normalizado y sin espacios.
-              if (category === "AUTHOR")
-                response = AuthorsController.getAuthorsByName(searchTerm);
-              else if (category === "BOOK")
-                response = BooksController.getBooksByTitle(searchTerm);
-              else if (category === "PUBLISHER")
-                response = PublishersController.getPublishersByName(searchTerm);
-              else
-                response = ResponseFormatter.formatError(
-                  `Categoría no válida para búsqueda: "${category}".`
-                );
-            }
-          } else {
-            response = ResponseFormatter.formatError(
-              `Comando GET / Categoría no válida: "${category}". Use GET AUTHORS, GET BOOKS, GET PUBLISHERS, o GET <CATEGORIA> <ID/TÉRMINO>.`
-            );
+      // El 'switch' actúa como el enrutador principal de nuestra API, basado en el método (GET, POST, etc.).
+      switch (method) {
+        case "GET": // Maneja "Listar Todos" y "Ver por ID".
+          if (!category) { response = ResponseFormatter.formatError("Comando GET requiere una categoría."); break; }
+          
+          if (param1) { // GET con un parámetro significa "Ver por ID".
+            if (category === "AUTHOR") response = AuthorsController.getAuthorById(param1);
+            else if (category === "BOOK") response = BooksController.getBookById(param1);
+            else if (category === "PUBLISHER") response = PublishersController.getPublisherById(param1);
+            else response = ResponseFormatter.formatError(`Categoría no válida para GET by ID: "${category}".`);
+          } else { // GET sin parámetro significa "Listar Todos".
+            if (category === "AUTHORS") response = AuthorsController.getAllAuthors();
+            else if (category === "BOOKS") response = BooksController.getAllBooks();
+            else if (category === "PUBLISHERS") response = PublishersController.getAllPublishers();
+            else response = ResponseFormatter.formatError(`Categoría no válida para GET: "${category}".`);
           }
           break;
 
-        case "POST":
-          if (!jsonDataString) {
-            response = ResponseFormatter.formatError(
-              "Faltan los datos en formato JSON para POST."
-            );
-            break;
-          }
-          try {
-            // El JSON se debe parsear y pasar al controlador. El controlador se encarga de la normalización.
+        case "SEARCH": // Comando explícito para búsquedas por texto, para evitar ambigüedades.
+          if (!param1) response = ResponseFormatter.formatError("Falta un término para SEARCH.");
+          else if (category === "AUTHOR") response = AuthorsController.getAuthorsByName(param1);
+          else if (category === "BOOK") response = BooksController.getBooksByTitle(param1);
+          else if (category === "PUBLISHER") response = PublishersController.getPublishersByName(param1);
+          else response = ResponseFormatter.formatError(`Categoría no válida para SEARCH: "${category}".`);
+          break;
+
+        case "POST": // Maneja la creación de nuevos ítems.
+          if (!jsonDataString) response = ResponseFormatter.formatError("Faltan datos JSON para POST.");
+          else try {
             const itemData = JSON.parse(jsonDataString);
-            if (category === "AUTHOR")
-              response = AuthorsController.addAuthor(itemData);
-            else if (category === "BOOK")
-              response = BooksController.addBook(itemData);
-            else if (category === "PUBLISHER")
-              response = PublishersController.addPublisher(itemData);
-            else
-              response = ResponseFormatter.formatError(
-                `Comando POST / Categoría no válida: "${category}".`
-              );
-          } catch (e) {
-            console.error("Error parseando JSON en POST:", e);
-            response = ResponseFormatter.formatError("JSON inválido.");
-          }
+            if (category === "AUTHOR") response = AuthorsController.addAuthor(itemData);
+            else if (category === "BOOK") response = BooksController.addBook(itemData);
+            else if (category === "PUBLISHER") response = PublishersController.addPublisher(itemData);
+            else response = ResponseFormatter.formatError(`Categoría no válida para POST: "${category}".`);
+          } catch (e) { response = ResponseFormatter.formatError("JSON inválido."); }
           break;
 
-        case "PUT":
-          if (!thirdParam) {
-            response = ResponseFormatter.formatError(
-              "Falta el ID del elemento a EDITAR."
-            );
-            break;
-          }
-          if (!jsonDataString) {
-            response = ResponseFormatter.formatError(
-              "Faltan los datos JSON para EDITAR."
-            );
-            break;
-          } // thirdParam ya está limpio (trim())
-          const idToUpdate = thirdParam.toLowerCase();
-          try {
-            const itemData = JSON.parse(jsonDataString); // Usamos idToUpdate normalizado en lugar de thirdParam
-            if (category === "AUTHOR")
-              response = AuthorsController.updateAuthor(idToUpdate, itemData);
-            else if (category === "BOOK")
-              response = BooksController.updateBook(idToUpdate, itemData);
-            else if (category === "PUBLISHER")
-              response = PublishersController.updatePublisher(
-                idToUpdate,
-                itemData
-              );
-            else
-              response = ResponseFormatter.formatError(
-                `Comando PUT / Categoría no válida: "${category}".`
-              );
-          } catch (e) {
-            console.error("Error parseando JSON en PUT:", e);
-            response = ResponseFormatter.formatError("JSON inválido.");
-          }
+        case "PUT": // Maneja la actualización de ítems existentes.
+          if (!param1) response = ResponseFormatter.formatError("Falta el ID para PUT.");
+          else if (!jsonDataString) response = ResponseFormatter.formatError("Faltan datos JSON para PUT.");
+          else try {
+            const itemData = JSON.parse(jsonDataString);
+            if (category === "AUTHOR") response = AuthorsController.updateAuthor(param1, itemData);
+            else if (category === "BOOK") response = BooksController.updateBook(param1, itemData);
+            else if (category === "PUBLISHER") response = PublishersController.updatePublisher(param1, itemData);
+            else response = ResponseFormatter.formatError(`Categoría no válida para PUT: "${category}".`);
+          } catch (e) { response = ResponseFormatter.formatError("JSON inválido."); }
           break;
 
-        case "DELETE":
-          if (!thirdParam) {
-            response = ResponseFormatter.formatError(
-              "Falta el ID del elemento a ELIMINAR."
-            );
-            break;
-          } // thirdParam ya está limpio (trim())
-          const idToDelete = thirdParam.toLowerCase();
-          if (category === "AUTHOR") {
-            // Usamos idToDelete en lugar de thirdParam
-            const booksCount = BooksController.countBooksByAuthorId(idToDelete);
-            if (booksCount > 0) {
-              response = ResponseFormatter.formatError(
-                `No se puede eliminar el AUTHOR con ID ${idToDelete} porque está asociado a ${booksCount} BOOK(s).`
-              );
-            } else {
-              response = AuthorsController.deleteAuthor(idToDelete);
-            }
-          } else if (category === "PUBLISHER") {
-            // Usamos idToDelete
-            const booksCount =
-              BooksController.countBooksByPublisherId(idToDelete);
-            if (booksCount > 0) {
-              response = ResponseFormatter.formatError(
-                `No se puede eliminar el PUBLISHER con ID ${idToDelete} porque está asociado a ${booksCount} BOOK(s).`
-              );
-            } else {
-              response = PublishersController.deletePublisher(idToDelete);
-            }
-          } else if (category === "BOOK") {
-            // Usamos idToDelete
-            response = BooksController.deleteBook(idToDelete);
-          } else
-            response = ResponseFormatter.formatError(
-              `Comando DELETE / Categoría no válida: "${category}".`
-            );
+        case "DELETE": // Maneja la eliminación de ítems.
+          if (!param1) { response = ResponseFormatter.formatError("Falta el ID para DELETE."); break; }
+          // El servidor simplemente delega la acción. La lógica de negocio (como la restricción de eliminación)
+          // está correctamente encapsulada dentro del controlador.
+          if (category === "AUTHOR") response = AuthorsController.deleteAuthor(param1);
+          else if (category === "BOOK") response = BooksController.deleteBook(param1);
+          else if (category === "PUBLISHER") response = PublishersController.deletePublisher(param1);
+          else response = ResponseFormatter.formatError(`Categoría no válida para DELETE: "${category}".`);
           break;
 
-        case "HELP":
+        case "HELP": // Proporciona ayuda al usuario.
           response = [
-            "COMANDOS DISPONIBLES (INGLÉS/MAYÚSCULAS):",
-            "  GET AUTHORS | GET BOOKS | GET PUBLISHERS",
-            "  GET <CATEGORY> <ID>",
-            "  GET <CATEGORY> <TÉRMINO DE BÚSQUEDA>",
-            "  POST AUTHOR <JSON> | POST BOOK <JSON> | POST PUBLISHER <JSON>",
-            "  PUT AUTHOR <ID> <JSON> | PUT BOOK <ID> <JSON> | PUT PUBLISHER <ID> <JSON>",
-            "  DELETE AUTHOR <ID> | DELETE BOOK <ID> | DELETE PUBLISHER <ID>",
-            "  EXIT",
-          ].join("\n");
-          //   '\n--- Menú de Ayuda ---',
-          //   'Puedes usar el menú interactivo para realizar las siguientes acciones:',
-          //   '', 
-          //   '  1. LISTAR:',
-          //   '     Muestra una lista completa de todos los autores, libros o editoriales.',
-          //   '',
-          //   '  2. BUSCAR:',
-          //   '     Busca ítems por su nombre o título. Es útil para encontrar el ID de un ítem específico.',
-          //   '',
-          //   '  3. VER POR ID:',
-          //   '     Muestra los detalles completos de un ítem si conoces su ID.',
-          //   '',
-          //   '  4. AGREGAR:',
-          //   '     Te guía para añadir un nuevo autor, libro o editorial a la base de datos.',
-          //   '',
-          //   '  5. EDITAR:',
-          //   '     Te permite modificar los datos de un autor, libro o editorial existente. Primero te pedirá buscarlo para obtener su ID.',
-          //   '',
-          //   '  6. ELIMINAR:',
-          //   '     Elimina un autor, libro o editorial de la base de datos. También te pedirá buscarlo primero para obtener su ID.',
-          //   '',
-          //   '  0. SALIR:',
-          //   '     Cierra la conexión con el servidor de forma segura.'
-          // ].join('\n');
+            '\n--- Menú de Ayuda ---',
+            'Puedes usar el menú interactivo para realizar las siguientes acciones:',
+            '',
+            '  1. LISTAR:',
+            '     Muestra una lista completa de todos los autores, libros o editoriales.',
+            '  2. BUSCAR:',
+            '     Busca ítems por su nombre o título.',
+            '  3. VER POR ID:',
+            '     Muestra los detalles completos de un ítem si conoces su ID.',
+            '  4. AGREGAR:',
+            '     Te guía para añadir un nuevo autor, libro o editorial.',
+            '  5. EDITAR:',
+            '     Te permite modificar los datos de un ítem existente.',
+            '  6. ELIMINAR:',
+            '     Elimina un ítem de la base de datos.',
+            '  0. SALIR:',
+            '     Cierra la conexión con el servidor.'
+          ].join('\n');
           break;
-        case "EXIT":
+        case "EXIT": // Cierra la conexión.
           socket.end("¡Hasta luego!\n");
           return;
-
-        default:
-          response = ResponseFormatter.formatError(
-            `Comando desconocido: "${command}". Escribe "HELP".`
-          );
+        default: // Maneja cualquier comando que no reconozcamos.
+          response = ResponseFormatter.formatError(`Comando desconocido: "${method}". Escribe "HELP".`);
           break;
       }
     } catch (error) {
       console.error("Error inesperado en el servidor:", error);
-      response = ResponseFormatter.formatError(
-        "Ocurrió un error fatal en el servidor."
-      );
+      response = ResponseFormatter.formatError("Ocurrió un error fatal en el servidor.");
     }
 
+    // Finalmente, enviamos la respuesta (preparada por el controlador y la vista) de vuelta al cliente.
     socket.write(response + "\n");
   });
 
-  socket.on("close", () =>
-    console.log(`Cliente desconectado: ${clientIdentifier}`)
-  );
-  socket.on("error", (err) =>
-    console.error(`Error en socket ${clientIdentifier}: ${err.message}`)
-  );
+  // El evento 'close' se dispara cuando este cliente se desconecta.
+  socket.on("close", () => console.log(`Cliente desconectado: ${clientIdentifier}`));
+  // El evento 'error' se dispara si hay un problema con la conexión de este cliente.
+  socket.on("error", (err) => console.error(`Error en socket ${clientIdentifier}: ${err.message}`));
 });
 
-server.listen(PORT, () =>
-  console.log(`Servidor TCP escuchando en el puerto ${PORT}`)
-);
+// Ponemos al servidor a "escuchar" en el puerto definido, listo para recibir conexiones.
+server.listen(PORT, () => console.log(`Servidor TCP escuchando en el puerto ${PORT}`));

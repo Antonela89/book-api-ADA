@@ -83,61 +83,49 @@ const BooksController = {
     }
   },
 
-/**
-   * Añade un nuevo libro y devuelve la respuesta formateada.
-   * @param {object} newBookData - Los datos del nuevo libro.
-   * @returns {string} La respuesta formateada como un string.
-   */
+  /**
+     * Añade un nuevo libro y devuelve la respuesta formateada.
+     * @param {object} newBookData - Los datos del nuevo libro.
+     * @returns {string} La respuesta formateada como un string.
+     */
   addBook(newBookData) {
     try {
-      // 1. Acceso y normalización de datos: Busca las claves en MAYÚSCULAS o minúsculas.
       const rawTitle = newBookData.TITLE || newBookData.title;
       const rawAuthorName = newBookData.AUTHORNAME || newBookData.authorName;
       const rawPublisherName = newBookData.PUBLISHERNAME || newBookData.publisherName;
       const rawYear = newBookData.YEAR || newBookData.year;
       const rawGenre = newBookData.GENRE || newBookData.genre;
 
-      // 2. Validación de que existan todos los datos.
       if (!rawTitle || !rawAuthorName || !rawPublisherName || !rawYear || !rawGenre) {
         return ResponseFormatter.formatError('Faltan datos obligatorios (title, authorName, publisherName, year, genre).');
       }
 
-      // verificar si se repite titulo
-      const existingBooks = BooksModel.findBooksByTitle(title);
+      // Busca si existe un libro con el nuevo título que se ingreso - evita duplicar objeto
+      const existingBooks = BooksModel.findBooksByTitle(rawTitle);
       if (existingBooks.length > 0) {
-        return ResponseFormatter.formatError(`Ya existe un libro con el título "${title}".`);
+        return ResponseFormatter.formatError(`Ya existe un libro con el título "${rawTitle}".`);
       }
 
-      // Validar autor
-      const authors = AuthorsModel.findAuthorsByName(authorName);
-      if (authors.length === 0) return ResponseFormatter.formatError(`El autor "${authorName}" no existe.`);
-      if (authors.length > 1) return ResponseFormatter.formatError(`El nombre de autor "${authorName}" es ambiguo. Use 'buscar-autor ${authorName}' para obtener el ID exacto y vuelva a intentarlo.`);
-      // 3. Normalizar nombres y buscar ID del Autor
-      // CORRECCIÓN: Se cambia .getAuthorsByName a .findAuthorsByName
-      const authorResults = AuthorsModel.findAuthorsByName(rawAuthorName.toLowerCase()); 
-      const author = authorResults.length > 0 ? authorResults[0] : null;
+      // Valida el nombre del autor
+      const authors = AuthorsModel.findAuthorsByName(rawAuthorName);
+      if (authors.length === 0) return ResponseFormatter.formatError(`El autor "${rawAuthorName}" no existe.`);
+      if (authors.length > 1) return ResponseFormatter.formatError(`El nombre de autor "${rawAuthorName}" es ambiguo.`);
 
-      // 4. Normalizar nombres y buscar ID de la Editorial
-      const publisherResults = PublishersModel.findPublishersByName(rawPublisherName.toLowerCase());
-      const publisher = publisherResults.length > 0 ? publisherResults[0] : null;
+      // Valida el nombre de la editorial
+      const publishers = PublishersModel.findPublishersByName(rawPublisherName);
+      if (publishers.length === 0) return ResponseFormatter.formatError(`La editorial "${rawPublisherName}" no existe.`);
+      if (publishers.length > 1) return ResponseFormatter.formatError(`El nombre de editorial "${rawPublisherName}" es ambiguo.`);
 
-      // 5. Validaciones de existencia
-      if (!author) {
-        return ResponseFormatter.formatError(`Autor/a "${rawAuthorName}" no encontrado/a. Por favor, asegúrate de que el nombre sea exacto y que el/la autor/a exista antes de añadir el libro.`);
-      }
-      if (!publisher) {
-        return ResponseFormatter.formatError(`Editorial "${rawPublisherName}" no encontrada. Por favor, asegúrate de que el nombre sea exacto y que la editorial exista antes de añadir el libro.`);
-      }
-
-      // 6. Crear el objeto final para guardar en el Modelo
+      // Creación del objeto a guardar
       const bookToSave = {
         title: rawTitle.toLowerCase(),
-        authorId: author.id,
-        publisherId: publisher.id,
-        year: parseInt(rawYear), 
+        authorId: authors[0].id,
+        publisherId: publishers[0].id,
+        year: parseInt(rawYear),
         genre: rawGenre.toLowerCase()
       };
 
+      // guardado del libro.
       BooksModel.addBook(bookToSave);
       return ResponseFormatter.formatSuccess('Libro añadido correctamente.', bookToSave);
     } catch (error) {
@@ -147,17 +135,38 @@ const BooksController = {
   },
 
   /**
- * Actualiza un libro existente.
+ * Actualiza un libro existente (solo año, titulo y genero)
  * @param {string} id - El ID del libro a actualizar.
- * @param {object} updatedBook - Los datos a actualizar. Puede incluir authorName/publisherName.
+ * @param {object} updatedBookData - Los datos a actualizar. 
  * @returns {string} La respuesta formateada.
  */
-  updateBook(id, updatedBook) {
+  updateBook(id, updatedBookData) {
     try {
-      if (updatedBook.authorName || updatedBook.publisherName || updatedBook.authorId || updatedBook.publisherId) {
+      // Regla de negocio: no permitir cambiar autor/editorial vía actualización.
+      if (updatedBookData.authorName || updatedBookData.publisherName || updatedBookData.authorId || updatedBookData.publisherId || updatedBookData.AUTHORNAME || updatedBookData.PUBLISHERNAME) {
+        return ResponseFormatter.formatError("Para cambiar autor o editorial, debe eliminar y volver a crear el libro.");
+      }
+
+      // Filtramos y normalizamos solo los campos permitidos.
+      const dataToUpdate = {};
+      const rawTitle = updatedBookData.TITLE || updatedBookData.title;
+      if (rawTitle) dataToUpdate.title = rawTitle.toLowerCase();
+
+      const rawYear = updatedBookData.YEAR || updatedBookData.year;
+      if (rawYear) dataToUpdate.year = parseInt(rawYear);
+
+      const rawGenre = updatedBookData.GENRE || updatedBookData.genre;
+      if (rawGenre) dataToUpdate.genre = rawGenre.toLowerCase();
+
+      if (Object.keys(dataToUpdate).length === 0) {
+        return ResponseFormatter.formatError("No se proporcionaron datos válidos (title, year, genre) para actualizar.");
+      }
+
+      if (updatedBookData.authorName || updatedBookData.publisherName || updatedBookData.authorId || updatedBookData.publisherId) {
         return ResponseFormatter.formatError("Para cambiar autor o editorial, debe eliminar y volver a crear el libro. Solo se permite actualizar título, año y género.");
       }
-      const success = BooksModel.updateBook(id, updatedBook);
+
+      const success = BooksModel.updateBook(id, dataToUpdate);
       if (success) {
         return ResponseFormatter.formatSuccess(`Libro con ID ${id} actualizado correctamente.`);
       } else {
@@ -166,49 +175,9 @@ const BooksController = {
     } catch (error) {
       console.error('Error en updateBook:', error);
       return ResponseFormatter.formatError('Error al actualizar libro.');
-  }
-},
-
-   /**   
-   * Función auxiliar para contar libros por Author ID (usada por server.js para DELETE)
-   * CORRECCIÓN: Realizamos el conteo en el controlador.
-   * @param {string} authorId - El ID del autor.
-   * @returns {number} La cantidad de libros asociados a ese autor.
-   */
-  countBooksByAuthorId(authorId) {
-    try {
-      // 1. Obtenemos todos los libros del Modelo.
-      const allBooks = BooksModel.getBooks(); 
-      // 2. Filtramos la lista para contar solo los que coinciden con el authorId.
-      const associatedBooks = allBooks.filter(book => book.authorId === authorId);
-      return associatedBooks.length;
-    } catch (error) {
-      console.error('Error en countBooksByAuthorId:', error);
-      // Retornamos un número alto para prevenir la eliminación si falla la lectura del modelo.
-      return 999; 
     }
   },
 
-  /**
-   * Función auxiliar para contar libros por Publisher ID (usada por server.js para DELETE)
-   * CORRECCIÓN: Realizamos el conteo en el controlador.
-   * @param {string} publisherId - El ID de la editorial.
-   * @returns {number} La cantidad de libros asociados a esa editorial.
-   */
-  countBooksByPublisherId(publisherId) {
-    try {
-      // 1. Obtenemos todos los libros del Modelo.
-      const allBooks = BooksModel.getBooks(); 
-      // 2. Filtramos la lista para contar solo los que coinciden con el publisherId.
-      const associatedBooks = allBooks.filter(book => book.publisherId === publisherId);
-      return associatedBooks.length;
-    } catch (error) {
-      console.error('Error en countBooksByPublisherId:', error);
-      // Retornamos un número alto para prevenir la eliminación si falla la lectura del modelo.
-      return 999;
-    }
-  },
-  
   /**
  * Elimina un libro por su ID.
  * @param {string} id - El ID del libro a eliminar.

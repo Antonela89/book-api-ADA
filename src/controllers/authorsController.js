@@ -1,41 +1,38 @@
 // Este archivo es el "Controlador" de Autores. Actúa como un intermediario.
-// Recibe peticiones (ej: "dame todos los autores"), le pide los datos al Modelo, y luego le pasa esos datos a la Vista (ResponseFormatter) para que prepare la respuesta final.
+// Recibe peticiones, les pide datos al Modelo y se los pasa a la Vista
+// para que prepare la respuesta final. Aquí residen las reglas de negocio.
 
 // importaciones
-import { AuthorsModel } from '../models/authorsModel.js'; // Importación de objeto model
+import { AuthorsModel } from '../models/authorsModel.js';
 import { BooksModel } from '../models/booksModel.js';
-import { ResponseFormatter } from '../views/responseFormatter.js'; // importacion de objeto views
+import { ResponseFormatter } from '../views/responseFormatter.js';
 
-// Creación de objeto de para encapsular metodos relacionados con autores
+// Creación del objeto para encapsular los métodos relacionados con autores.
 const AuthorsController = {
   /**
- * Obtiene todos los autores y devuelve la respuesta formateada.
- * @returns {string} La respuesta formateada como un string.
- */
+   * Obtiene todos los autores.
+   * @returns {string} La respuesta formateada.
+   */
   getAllAuthors() {
     try {
-      // pide los datos al modelo
+      // Pide los datos al Modelo.
       const authors = AuthorsModel.getAuthors();
-      // pasa los datos a la vista para que los formatee
+      // Pasa los datos a la Vista para que los formatee.
       return ResponseFormatter.formatSuccess('Lista de autores obtenida.', authors);
-      // control de errores
     } catch (error) {
-      console.error('Error en getAuthors:', error);
-      // formateo de la respuesta del error
+      console.error('Error en getAllAuthors:', error);
       return ResponseFormatter.formatError('No se pudo obtener la lista de autores.');
     }
   },
 
   /**
-   * Busca autores por nombre y maneja múltiples resultados.
+   * Busca autores por nombre.
    * @param {string} name - El nombre del autor a buscar.
    * @returns {string} La respuesta formateada.
    */
   getAuthorsByName(name) {
     try {
-      // El modelo devuelve un ARRAY de autores
       const authors = AuthorsModel.findAuthorsByName(name);
-
       // Comprueba si el Modelo encontró algún autor.
       if (authors.length > 0) {
         return ResponseFormatter.formatSuccess(`Se encontraron ${authors.length} autores con el nombre "${name}".`, authors);
@@ -49,7 +46,7 @@ const AuthorsController = {
   },
 
   /**
-   * Obtiene un único autor por su ID.
+   *  Obtiene un único autor por su ID.
    * @param {string} id - El ID del autor a buscar.
    * @returns {string} La respuesta formateada.
    */
@@ -68,75 +65,64 @@ const AuthorsController = {
   },
 
   /**
-   * Añade un nuevo autor, verificando que no exista uno con el mismo nombre, el modelo genera el ID.
-/**
-   * Añade un nuevo autor. El modelo se encarga de generar el ID.
-   * @param {object} newAuthorData - Los datos del nuevo autor.
+   * Añade un nuevo autor, validando datos y previniendo duplicados.
+   * @param {object} newAuthorData - Los datos del nuevo autor recibidos del servidor.
    * @returns {string} La respuesta formateada.
    */
   addAuthor(newAuthorData) {
     try {
-      // 1. Acceso a los datos: Buscamos las claves en MAYÚSCULAS (que es como vienen del servidor)
-      // o en minúsculas (como vienen del cliente), y las normalizamos.
-      // Usamos || newAuthorData.name como fallback si el servidor se corrige.
+      // Normalizamos los datos de entrada (aceptamos claves en mayúsculas o minúsculas).
       const rawName = newAuthorData.NAME || newAuthorData.name;
       const rawNationality = newAuthorData.NATIONALITY || newAuthorData.nationality;
 
-      // 2. Validación de que existan los datos
       if (!rawName || !rawNationality) {
         return ResponseFormatter.formatError('Faltan datos obligatorios (name, nationality).');
       }
-      
-      // 3. Crear el objeto final con las claves en minúsculas (lo que el modelo espera).
-      const authorToSave = { 
-          name: rawName.toLowerCase(), 
-          nationality: rawNationality.toLowerCase() 
+
+      // Creamos el objeto final con las claves y valores normalizados (todo en minúsculas).
+      const authorToSave = {
+        name: rawName.toLowerCase(),
+        nationality: rawNationality.toLowerCase()
       };
 
-
-      // Buscamos si ya existe un autor con el mismo nombre (insensible a mayúsculas).
-      // findAuthorsByName devuelve una lista de coincidencias.
-      const existingAuthors = AuthorsModel.findAuthorsByName(newAuthorData.name);
+      // Regla de negocio: verificamos si ya existe un autor con ese nombre.
+      const existingAuthors = AuthorsModel.findAuthorsByName(authorToSave.name);
       if (existingAuthors.length > 0) {
-        // Si la lista no está vacía, el autor ya existe.
-        return ResponseFormatter.formatError(`Ya existe un autor con el nombre "${newAuthorData.name}".`);
+        return ResponseFormatter.formatError(`Ya existe un autor con el nombre "${authorToSave.name}".`);
       }
 
-      // Le pasamos los datos al Modelo para que los guarde.
+      // Pasamos el objeto limpio al Modelo para que lo guarde.
       AuthorsModel.addAuthor(authorToSave);
       return ResponseFormatter.formatSuccess('Autor añadido correctamente.', authorToSave);
-    } catch (error) {
+    } catch (error)      {
       console.error('Error en addAuthor:', error);
       return ResponseFormatter.formatError('Ocurrió un error al añadir el autor.');
     }
   },
 
   /**
-   * Actualiza un autor por su ID único.
-   * @param {string} id - El ID del autor a actualizar.
-   * @param {object} updatedAuthor - Los nuevos datos para el autor (tal como llegan del servidor).
+   * Edita un autor por su ID.
+   * @param {string} id - El ID del autor a editar.
+   * @param {object} updatedAuthorData - Los nuevos datos del autor.
    * @returns {string} La respuesta formateada.
    */
-  updateAuthor(id, updatedAuthor) {
+  updateAuthor(id, updatedAuthorData) {
     try {
-      // 1. Filtrado y Normalización de datos
+      // Filtramos y normalizamos solo los campos que nos interesan.
       const dataToUpdate = {};
-      
-      // Intentar obtener el nombre (NAME o name) y normalizar
-      const rawName = updatedAuthor.NAME || updatedAuthor.name;
+      const rawName = updatedAuthorData.NAME || updatedAuthorData.name;
       if (rawName) dataToUpdate.name = rawName.toLowerCase();
 
-      // Intentar obtener la nacionalidad (NATIONALITY o nationality) y normalizar
-      const rawNationality = updatedAuthor.NATIONALITY || updatedAuthor.nationality;
+      const rawNationality = updatedAuthorData.NATIONALITY || updatedAuthorData.nationality;
       if (rawNationality) dataToUpdate.nationality = rawNationality.toLowerCase();
 
-      // 2. Comprobar si hay datos válidos para actualizar
+      // Regla de negocio: si no se pasó ningún dato válido, devolvemos un error.
       if (Object.keys(dataToUpdate).length === 0) {
-          return ResponseFormatter.formatError(`No se proporcionaron datos válidos (name, nationality) para actualizar el autor con ID ${id}.`);
+        return ResponseFormatter.formatError(`No se proporcionaron datos válidos (name, nationality) para actualizar.`);
       }
-      
-      // 3. Pasar SOLO los datos filtrados y normalizados al Modelo
-      const success = AuthorsModel.updateAuthor(id, dataToUpdate); 
+
+      // Le pedimos al Modelo que intente actualizar con los datos ya filtrados.
+      const success = AuthorsModel.updateAuthor(id, dataToUpdate);
       if (success) {
         return ResponseFormatter.formatSuccess(`Autor con ID ${id} actualizado correctamente.`);
       } else {
@@ -148,38 +134,35 @@ const AuthorsController = {
     }
   },
 
-  /** 
+  /**
    * Elimina un autor por su ID, solo si no tiene libros asociados.
    * @param {string} id - El ID del autor a eliminar.
    * @returns {string} La respuesta formateada.
    */
   deleteAuthor(id) {
     try {
-      // --- VERIFICACIÓN DE RESTRICCIÓN ---
-      // Primero, verificamos si el autor que se quiere eliminar existe.
+      // Primero, verificamos si el autor que se quiere eliminar realmente existe.
       const authorExists = AuthorsModel.getAuthorById(id);
       if (!authorExists) {
         return ResponseFormatter.formatError(`No se encontró ningún autor con el ID ${id} para eliminar.`);
       }
 
-      // Buscamos si existen libros asociados a este autor.
+      // Regla de negocio: buscamos si existen libros asociados a este autor.
       const booksByAuthor = BooksModel.findBooksByAuthorId(id);
 
-      // Si el array resultante tiene uno o más libros, no permitimos la eliminación.
+      // Si el array resultante tiene uno o más libros, aplicamos la restricción y no permitimos la eliminación.
       if (booksByAuthor.length > 0) {
         return ResponseFormatter.formatError(
-          `No se puede eliminar el autor con ID ${id} porque tiene ${booksByAuthor.length} libro(s) asociado(s).`
+          `No se puede eliminar al autor "${authorExists.name}" porque tiene ${booksByAuthor.length} libro(s) asociado(s). Primero elimina sus libros.`
         );
       }
-      // ------------------------------------------
-
-      // --- PROCEDER CON LA ELIMINACIÓN ---
-      // Si el código llega hasta aquí, significa que el autor no tiene libros.
+      
+      // Si el autor existe y no tiene libros, procedemos a eliminarlo.
       const success = AuthorsModel.deleteAuthor(id);
-
       if (success) {
-        return ResponseFormatter.formatSuccess(`Autor con ID ${id} ha sido eliminado.`);
+        return ResponseFormatter.formatSuccess(`El autor "${authorExists.name}" (ID: ${id}) ha sido eliminado.`);
       } else {
+        // Este caso es redundante gracias a la primera verificación, pero es una buena práctica de seguridad.
         return ResponseFormatter.formatError(`No se encontró ningún autor con el ID ${id} para eliminar.`);
       }
     } catch (error) {
