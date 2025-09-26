@@ -1,5 +1,4 @@
-// Este es el Controlador de Libros. Es el más complejo porque un libro se relaciona con autores y editoriales. 
-// Por lo tanto, este controlador necesita hablar con los tres modelos (BooksModel, AuthorsModel, PublishersModel) para hacer su trabajo.
+// Este es el Controlador de Libros. Es el más complejo porque un libro se relaciona con autores y editoriales.
 
 // importaciones
 import { BooksModel } from '../models/booksModel.js';
@@ -8,17 +7,11 @@ import { PublishersModel } from '../models/publishersModel.js';
 import { ResponseFormatter } from '../views/responseFormatter.js';
 
 /**
- * Función auxiliar para formatear los datos de un libro para una mejor visualización.
- * Reemplaza los IDs (authorId, publisherId) por los nombres correspondientes para que la información sea más legible para el usuario.
- * @param {object} book - El objeto libro original con IDs.
- * @returns {object} Un nuevo objeto libro con nombres en lugar de IDs.
+ * Formatea los datos de un libro reemplazando IDs por nombres.
  */
 function formatBookData(book) {
-  // Pide al Modelo de Autores que encuentre el autor por su ID.
   const author = AuthorsModel.getAuthorById(book.authorId);
-  // Pide al Modelo de Editoriales que encuentre la editorial por su ID.
   const publisher = PublishersModel.getPublisherById(book.publisherId);
-  // Devuelve un nuevo objeto con los datos listos para mostrar.
   return {
     id: book.id,
     title: book.title,
@@ -29,12 +22,7 @@ function formatBookData(book) {
   };
 }
 
-// Creación de objeto de para encapsular metodos relacionados con libros
 const BooksController = {
-  /**
-   * Obtiene todos los libros y devuelve la respuesta formateada.
-   * @returns {string} La respuesta formateada como un string.
-   */
   getAllBooks() {
     try {
       const books = BooksModel.getBooks().map(formatBookData);
@@ -45,11 +33,6 @@ const BooksController = {
     }
   },
 
-  /**
-   * Busca libros por título y maneja múltiples resultados.
-   * @param {string} title - El título del libro a buscar (puede ser parcial).
-   * @returns {string} La respuesta formateada.
-   */
   getBooksByTitle(title) {
     try {
       const books = BooksModel.findBooksByTitle(title).map(formatBookData);
@@ -64,14 +47,9 @@ const BooksController = {
     }
   },
 
-  /**
-   * Obtiene un libro por su ID.
-   * @param {string} id - El ID del libro a buscar.
-   * @returns {string} Una cadena de texto con la respuesta.
-   */
   getBookById(id) {
     try {
-      const book = BooksModel.getBookById(id);
+      const book = BooksModel.getBooks().find(b => b.id.toLowerCase() === id.toLowerCase());
       if (book) {
         return ResponseFormatter.formatSuccess(`Libro con ID ${id} encontrado.`, formatBookData(book));
       } else {
@@ -83,48 +61,32 @@ const BooksController = {
     }
   },
 
-/**
-   * Añade un nuevo libro y devuelve la respuesta formateada.
-   * @param {object} newBookData - Los datos del nuevo libro.
-   * @returns {string} La respuesta formateada como un string.
-   */
   addBook(newBookData) {
     try {
-      // 1. Acceso y normalización de datos: Busca las claves en MAYÚSCULAS o minúsculas.
       const rawTitle = newBookData.TITLE || newBookData.title;
       const rawAuthorName = newBookData.AUTHORNAME || newBookData.authorName;
       const rawPublisherName = newBookData.PUBLISHERNAME || newBookData.publisherName;
       const rawYear = newBookData.YEAR || newBookData.year;
       const rawGenre = newBookData.GENRE || newBookData.genre;
 
-      // 2. Validación de que existan todos los datos.
       if (!rawTitle || !rawAuthorName || !rawPublisherName || !rawYear || !rawGenre) {
         return ResponseFormatter.formatError('Faltan datos obligatorios (title, authorName, publisherName, year, genre).');
       }
 
-      // 3. Normalizar nombres y buscar ID del Autor
-      // CORRECCIÓN: Se cambia .getAuthorsByName a .findAuthorsByName
-      const authorResults = AuthorsModel.findAuthorsByName(rawAuthorName.toLowerCase()); 
+      const authorResults = AuthorsModel.findAuthorsByName(rawAuthorName.toLowerCase());
       const author = authorResults.length > 0 ? authorResults[0] : null;
 
-      // 4. Normalizar nombres y buscar ID de la Editorial
       const publisherResults = PublishersModel.findPublishersByName(rawPublisherName.toLowerCase());
       const publisher = publisherResults.length > 0 ? publisherResults[0] : null;
 
-      // 5. Validaciones de existencia
-      if (!author) {
-        return ResponseFormatter.formatError(`Autor/a "${rawAuthorName}" no encontrado/a. Por favor, asegúrate de que el nombre sea exacto y que el/la autor/a exista antes de añadir el libro.`);
-      }
-      if (!publisher) {
-        return ResponseFormatter.formatError(`Editorial "${rawPublisherName}" no encontrada. Por favor, asegúrate de que el nombre sea exacto y que la editorial exista antes de añadir el libro.`);
-      }
+      if (!author) return ResponseFormatter.formatError(`Autor/a "${rawAuthorName}" no encontrado/a.`);
+      if (!publisher) return ResponseFormatter.formatError(`Editorial "${rawPublisherName}" no encontrada.`);
 
-      // 6. Crear el objeto final para guardar en el Modelo
       const bookToSave = {
         title: rawTitle.toLowerCase(),
         authorId: author.id,
         publisherId: publisher.id,
-        year: parseInt(rawYear), 
+        year: parseInt(rawYear),
         genre: rawGenre.toLowerCase()
       };
 
@@ -136,59 +98,43 @@ const BooksController = {
     }
   },
 
-  /**
-   * Función auxiliar para contar libros por Author ID (usada por server.js para DELETE)
-   * CORRECCIÓN: Realizamos el conteo en el controlador.
-   * @param {string} authorId - El ID del autor.
-   * @returns {number} La cantidad de libros asociados a ese autor.
-   */
-  countBooksByAuthorId(authorId) {
+  updateBook(id, updatedBookData) {
     try {
-      // 1. Obtenemos todos los libros del Modelo.
-      const allBooks = BooksModel.getBooks(); 
-      // 2. Filtramos la lista para contar solo los que coinciden con el authorId.
-      const associatedBooks = allBooks.filter(book => book.authorId === authorId);
-      return associatedBooks.length;
+      const success = BooksModel.updateBook(id, updatedBookData);
+      if (success) {
+        return ResponseFormatter.formatSuccess(`Libro con ID ${id} actualizado correctamente.`);
+      } else {
+        return ResponseFormatter.formatError(`No se encontró ningún libro con el ID ${id}.`);
+      }
     } catch (error) {
-      console.error('Error en countBooksByAuthorId:', error);
-      // Retornamos un número alto para prevenir la eliminación si falla la lectura del modelo.
-      return 999; 
+      console.error('Error en updateBook:', error);
+      return ResponseFormatter.formatError('Error al actualizar el libro.');
     }
   },
 
-  /**
-   * Función auxiliar para contar libros por Publisher ID (usada por server.js para DELETE)
-   * CORRECCIÓN: Realizamos el conteo en el controlador.
-   * @param {string} publisherId - El ID de la editorial.
-   * @returns {number} La cantidad de libros asociados a esa editorial.
-   */
-  countBooksByPublisherId(publisherId) {
+  countBooksByAuthorId(authorId) {
     try {
-      // 1. Obtenemos todos los libros del Modelo.
-      const allBooks = BooksModel.getBooks(); 
-      // 2. Filtramos la lista para contar solo los que coinciden con el publisherId.
-      const associatedBooks = allBooks.filter(book => book.publisherId === publisherId);
-      return associatedBooks.length;
+      return BooksModel.getBooks().filter(book => book.authorId.toLowerCase() === authorId.toLowerCase()).length;
     } catch (error) {
-      console.error('Error en countBooksByPublisherId:', error);
-      // Retornamos un número alto para prevenir la eliminación si falla la lectura del modelo.
+      console.error('Error en countBooksByAuthorId:', error);
       return 999;
     }
   },
-  
-  /**
- * Elimina un libro por su ID.
- * @param {string} name - El ID del libro a eliminar.
- * @returns {string} La respuesta formateada.
- */
+
+  countBooksByPublisherId(publisherId) {
+    try {
+      return BooksModel.getBooks().filter(book => book.publisherId.toLowerCase() === publisherId.toLowerCase()).length;
+    } catch (error) {
+      console.error('Error en countBooksByPublisherId:', error);
+      return 999;
+    }
+  },
+
   deleteBook(id) {
     try {
       const success = BooksModel.deleteBook(id);
-      if (success) {
-        return ResponseFormatter.formatSuccess(`Libro con ID ${id} eliminado correctamente.`);
-      } else {
-        return ResponseFormatter.formatError(`No se encontró ningún libro con el ID ${id} para eliminar.`);
-      }
+      if (success) return ResponseFormatter.formatSuccess(`Libro con ID ${id} eliminado correctamente.`);
+      return ResponseFormatter.formatError(`No se encontró ningún libro con el ID ${id} para eliminar.`);
     } catch (error) {
       console.error('Error en deleteBook:', error);
       return ResponseFormatter.formatError('Error al eliminar el libro.');
@@ -196,5 +142,4 @@ const BooksController = {
   }
 };
 
-// exportación
 export { BooksController };

@@ -1,32 +1,22 @@
-// Este archivo es el "Controlador" de Editoriales. Al igual que el de autores, es un intermediario que conecta las peticiones con el Modelo de Editoriales y la Vista.
+// Este archivo es el "Controlador" de Editoriales. Actúa como intermediario entre las peticiones, el Modelo y la Vista.
 
-import { PublishersModel } from '../models/publishersModel.js'; // Importación de objeto model
-import { ResponseFormatter } from '../views/responseFormatter.js'; // importacion de objeto views
+import { PublishersModel } from '../models/publishersModel.js';
+import { ResponseFormatter } from '../views/responseFormatter.js';
 
-//// Creamos el objeto para agrupar todas los métodos relacionadas con editoriales.
 const PublishersController = {
-  /**
-   * Obtiene todos las editoriales y devuelve la respuesta formateada.
-   * @returns {string} La respuesta formateada como un string.
-   */
   getAllPublishers() {
     try {
       const publishers = PublishersModel.getPublishers();
       return ResponseFormatter.formatSuccess('Lista de editoriales obtenida.', publishers);
     } catch (error) {
-      console.error('Error en getPublishers:', error);
+      console.error('Error en getAllPublishers:', error);
       return ResponseFormatter.formatError('No se pudo obtener la lista de editoriales.');
     }
   },
 
-  /**
-   * Obtiene una lista de editoriales por su nombre y devuelve la respuesta formateada.
-   * @param {string} name El nombre del editorial a buscar.
-   * @returns {string} La respuesta formateada.
-   */
   getPublishersByName(name) {
     try {
-      const publishers = PublishersModel.findPublishersByName(name);
+      const publishers = PublishersModel.findPublishersByName(name.toLowerCase());
       if (publishers.length > 0) {
         return ResponseFormatter.formatSuccess(`Se encontraron ${publishers.length} editoriales con el nombre "${name}".`, publishers);
       } else {
@@ -38,14 +28,9 @@ const PublishersController = {
     }
   },
 
-   /**
-   * Obtiene una única editorial por su ID.
-   * @param {string} id - El ID de la editorial a buscar.
-   * @returns {string} Una cadena de texto con la respuesta.
-   */
   getPublisherById(id) {
     try {
-      const publisher = PublishersModel.getPublisherById(id);
+      const publisher = PublishersModel.getPublishers().find(p => p.id.toLowerCase() === id.toLowerCase());
       if (publisher) {
         return ResponseFormatter.formatSuccess(`Editorial con ID ${id} encontrada.`, publisher);
       } else {
@@ -57,26 +42,18 @@ const PublishersController = {
     }
   },
 
-  /**
-   * Añade una nueva editorial y devuelve la respuesta formateada.
-   * @param {object} newPublisherData - Los datos de la nueva editorial.
-   * @returns {string} La respuesta formateada como un string.
-   */
   addPublisher(newPublisherData) {
     try {
-      // 1. Acceso a los datos: Busca las claves en MAYÚSCULAS o minúsculas.
       const rawName = newPublisherData.NAME || newPublisherData.name;
       const rawCountry = newPublisherData.COUNTRY || newPublisherData.country;
 
-      // 2. Validación de que existan los datos
       if (!rawName || !rawCountry) {
         return ResponseFormatter.formatError('Faltan datos obligatorios (name, country).');
       }
-      
-      // 3. Crear el objeto final con las claves en minúsculas (lo que el modelo espera).
-      const publisherToSave = { 
-          name: rawName.toLowerCase(), 
-          country: rawCountry.toLowerCase() 
+
+      const publisherToSave = {
+        name: rawName.toLowerCase(),
+        country: rawCountry.toLowerCase()
       };
 
       PublishersModel.addPublisher(publisherToSave);
@@ -87,12 +64,6 @@ const PublishersController = {
     }
   },
 
-  /**
-   * Actualiza un editorial existente.
-   * @param {string} id El id del editorial a actualizar.
-   * @param {object} updatedPublisher Los nuevos datos para el editorial.
-   * @returns {string} La respuesta formateada.
-   */
   updatePublisher(id, updatedPublisher) {
     try {
       const success = PublishersModel.updatePublisher(id, updatedPublisher);
@@ -107,12 +78,7 @@ const PublishersController = {
     }
   },
 
-    /**
-     * Elimina un editorial por su id.
-     * @param {string} id El id del editorial a eliminar.
-     * @returns {string} La respuesta formateada.
-     */
-     deletePublisher(id) {
+  deletePublisher(id) {
     try {
       const success = PublishersModel.deletePublisher(id);
       if (success) {
@@ -127,5 +93,4 @@ const PublishersController = {
   }
 };
 
-// exportación
 export { PublishersController };
