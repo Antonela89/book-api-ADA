@@ -39,11 +39,11 @@ const PublishersController = {
     }
   },
 
-   /**
-   * Obtiene una única editorial por su ID.
-   * @param {string} id - El ID de la editorial a buscar.
-   * @returns {string} Una cadena de texto con la respuesta.
-   */
+  /**
+  * Obtiene una única editorial por su ID.
+  * @param {string} id - El ID de la editorial a buscar.
+  * @returns {string} Una cadena de texto con la respuesta.
+  */
   getPublisherById(id) {
     try {
       const publisher = PublishersModel.getPublisherById(id);
@@ -60,7 +60,7 @@ const PublishersController = {
 
   /**
    * Añade una nueva editorial y devuelve la respuesta formateada.
-   * @param {object} newPublisher - Los datos de la nueva editorial.
+   * @param {object} newPublisherData - Los datos de la nueva editorial.
    * @returns {string} La respuesta formateada como un string.
    */
   addPublisher(newPublisherData) {
@@ -70,7 +70,7 @@ const PublishersController = {
         return ResponseFormatter.formatError('Faltan datos obligatorios (name, country).');
       }
 
-       const existingPublishers = PublishersModel.findPublishersByName(newPublisherData.name);
+      const existingPublishers = PublishersModel.findPublishersByName(newPublisherData.name);
       if (existingPublishers.length > 0) {
         return ResponseFormatter.formatError(`Ya existe una editorial con el nombre "${newPublisherData.name}".`);
       }
@@ -103,13 +103,18 @@ const PublishersController = {
     }
   },
 
-    /**
-   * Elimina una editorial por su ID, solo si no tiene libros asociados.
-   * @param {string} id - El ID de la editorial a eliminar.
-   * @returns {string} La respuesta formateada.
-   */
+  /**
+ * Elimina una editorial por su ID, solo si no tiene libros asociados.
+ * @param {string} id - El ID de la editorial a eliminar.
+ * @returns {string} La respuesta formateada.
+ */
   deletePublisher(id) {
     try {
+      // verificar la existencia de la editorial
+      const publisherExists = PublishersModel.getPublisherById(id);
+      if (!publisherExists) {
+        return ResponseFormatter.formatError(`No se encontró ninguna editorial con el ID ${id} para eliminar.`);
+      }
       // --- VERIFICACIÓN DE RESTRICCIÓN ---
       const booksByPublisher = BooksModel.findBooksByPublisherId(id);
 

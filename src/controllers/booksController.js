@@ -130,7 +130,7 @@ const BooksController = {
 
   /**
  * Actualiza un libro existente.
- * @param {string} name - El ID del libro a actualizar.
+ * @param {string} id - El ID del libro a actualizar.
  * @param {object} updatedBook - Los datos a actualizar. Puede incluir authorName/publisherName.
  * @returns {string} La respuesta formateada.
  */
@@ -154,7 +154,7 @@ const BooksController = {
 
   /**
  * Elimina un libro por su ID.
- * @param {string} name - El ID del libro a eliminar.
+ * @param {string} id - El ID del libro a eliminar.
  * @returns {string} La respuesta formateada.
  */
   deleteBook(id) {
