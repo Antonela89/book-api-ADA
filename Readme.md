@@ -144,7 +144,31 @@ El proyecto incluye un script de pruebas automatizado que verifica el ciclo CRUD
     ```
 3.  La terminal mostrará el progreso de cada prueba, el comando enviado y la respuesta del servidor, finalizando con un resumen.
 
-## 👥 Autores
+---
 
-*   Maria Gabriela Martinez Herrero 
-*   Antonela Borgogno
+## 🛠️ Tecnologías usadas
+
+<p>
+  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript"/>
+  <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js"/>
+  <img src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white" alt="Git"/>
+  <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"/>
+</p>
+
+---
+
+## 🧑‍💻 Autoras
+
+- **BORGOGNO, Antonela** [![LinkedIn](https://cdn-icons-png.flaticon.com/24/174/174857.png)](https://www.linkedin.com/in/antonela-borgogno/)  [![GitHub](https://cdn-icons-png.flaticon.com/24/733/733553.png)](https://github.com/Antonela89)
+
+- **MARTINEZ, Gabriela**  [![LinkedIn](https://cdn-icons-png.flaticon.com/24/174/174857.png)](https://www.linkedin.com/in/magamahe/)  [![GitHub](https://cdn-icons-png.flaticon.com/24/733/733553.png)](https://github.com/magamahe)
+
+---
+
+## 📄 Institución Académica
+<p align="center">
+  <img src="docs/img/logo_ada.png" alt="Logo ADA" width="200"/>
+<center> Programa de formación en desarrollo web, Cohorte intro-js-202504  </center>
+<center>Proyecto educativo sin fines comerciales. Todos los derechos reservados © 2025.</center>
+
+---
