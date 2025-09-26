@@ -113,14 +113,29 @@ const server = net.createServer((socket) => {
           break;
         case 'ayuda':
           response = [
-            'Comandos Disponibles:',
-            '  listar <autores|libros|editoriales>',
-            '  buscar <autor|libro|editorial> <nombre/título>',
-            '  ver <autor|libro|editorial> <id>',
-            '  agregar <autor|libro|editorial>',
-            '  editar <autor|libro|editorial> <id>',
-            '  eliminar <autor|libro|editorial> <id>',
-            '  salir'
+            '\n--- Menú de Ayuda ---',
+            'Puedes usar el menú interactivo para realizar las siguientes acciones:',
+            '', 
+            '  1. LISTAR:',
+            '     Muestra una lista completa de todos los autores, libros o editoriales.',
+            '',
+            '  2. BUSCAR:',
+            '     Busca ítems por su nombre o título. Es útil para encontrar el ID de un ítem específico.',
+            '',
+            '  3. VER POR ID:',
+            '     Muestra los detalles completos de un ítem si conoces su ID.',
+            '',
+            '  4. AGREGAR:',
+            '     Te guía para añadir un nuevo autor, libro o editorial a la base de datos.',
+            '',
+            '  5. EDITAR:',
+            '     Te permite modificar los datos de un autor, libro o editorial existente. Primero te pedirá buscarlo para obtener su ID.',
+            '',
+            '  6. ELIMINAR:',
+            '     Elimina un autor, libro o editorial de la base de datos. También te pedirá buscarlo primero para obtener su ID.',
+            '',
+            '  0. SALIR:',
+            '     Cierra la conexión con el servidor de forma segura.'
           ].join('\n');
           break;
         case 'salir':
