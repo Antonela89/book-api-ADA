@@ -37,19 +37,23 @@ const server = net.createServer((socket) => {
     let commandPart, jsonDataString = null;
 
     if (firstBraceIndex !== -1) {
-      // Si hay un '{', dividimos el mensaje en dos partes.
       commandPart = message.substring(0, firstBraceIndex).trim();
       jsonDataString = message.substring(firstBraceIndex);
     } else {
-      // Si no hay '{', todo el mensaje es el comando.
       commandPart = message;
     }
 
-    // NORMALIZAMOS SOLO LA PARTE DEL COMANDO A MAYÚSCULAS para que sea case-insensitive.
-    const commandParts = commandPart.toUpperCase().split(" ");
-    const [method, category, ...params] = commandParts;
-    // Unimos el resto de los parámetros para permitir términos de búsqueda con espacios (ej: "Cien años de soledad").
-    const param1 = params.join(" ");
+    // --- LÓGICA DE PARSEO CORREGIDA Y ROBUSTA ---
+    // Dividimos el comando SIN cambiar a mayúsculas todavía.
+    const commandParts = commandPart.split(" ");
+
+    // Extraemos las partes y normalizamos a mayúsculas SOLO las que necesitamos.
+    // Usamos '|| '' ' como seguridad por si el comando viene vacío.
+    const method = (commandParts[0] || '').toUpperCase();
+    const category = (commandParts[1] || '').toUpperCase();
+    
+    // El resto de los parámetros (el ID o el término de búsqueda) se mantienen con su case original.
+    const param1 = commandParts.slice(2).join(" ");
 
     let response = "";
 
