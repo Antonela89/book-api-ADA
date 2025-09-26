@@ -69,15 +69,30 @@ const AuthorsController = {
 
   /**
    * Añade un nuevo autor, verificando que no exista uno con el mismo nombre, el modelo genera el ID.
+/**
+   * Añade un nuevo autor. El modelo se encarga de generar el ID.
    * @param {object} newAuthorData - Los datos del nuevo autor.
    * @returns {string} La respuesta formateada.
    */
   addAuthor(newAuthorData) {
     try {
-      // validacion de que esten todos los datos 
-      if (!newAuthorData || !newAuthorData.name || !newAuthorData.nationality) {
+      // 1. Acceso a los datos: Buscamos las claves en MAYÚSCULAS (que es como vienen del servidor)
+      // o en minúsculas (como vienen del cliente), y las normalizamos.
+      // Usamos || newAuthorData.name como fallback si el servidor se corrige.
+      const rawName = newAuthorData.NAME || newAuthorData.name;
+      const rawNationality = newAuthorData.NATIONALITY || newAuthorData.nationality;
+
+      // 2. Validación de que existan los datos
+      if (!rawName || !rawNationality) {
         return ResponseFormatter.formatError('Faltan datos obligatorios (name, nationality).');
       }
+      
+      // 3. Crear el objeto final con las claves en minúsculas (lo que el modelo espera).
+      const authorToSave = { 
+          name: rawName.toLowerCase(), 
+          nationality: rawNationality.toLowerCase() 
+      };
+
 
       // Buscamos si ya existe un autor con el mismo nombre (insensible a mayúsculas).
       // findAuthorsByName devuelve una lista de coincidencias.
@@ -88,8 +103,8 @@ const AuthorsController = {
       }
 
       // Le pasamos los datos al Modelo para que los guarde.
-      AuthorsModel.addAuthor(newAuthorData);
-      return ResponseFormatter.formatSuccess('Autor añadido correctamente.', newAuthorData);
+      AuthorsModel.addAuthor(authorToSave);
+      return ResponseFormatter.formatSuccess('Autor añadido correctamente.', authorToSave);
     } catch (error) {
       console.error('Error en addAuthor:', error);
       return ResponseFormatter.formatError('Ocurrió un error al añadir el autor.');
@@ -99,13 +114,29 @@ const AuthorsController = {
   /**
    * Actualiza un autor por su ID único.
    * @param {string} id - El ID del autor a actualizar.
-   * @param {object} updatedAuthor - Los nuevos datos para el autor.
+   * @param {object} updatedAuthor - Los nuevos datos para el autor (tal como llegan del servidor).
    * @returns {string} La respuesta formateada.
    */
   updateAuthor(id, updatedAuthor) {
     try {
-      // Le pedimos al Modelo que intente actualizar. El Modelo nos dirá si tuvo éxito (true/false).
-      const success = AuthorsModel.updateAuthor(id, updatedAuthor);
+      // 1. Filtrado y Normalización de datos
+      const dataToUpdate = {};
+      
+      // Intentar obtener el nombre (NAME o name) y normalizar
+      const rawName = updatedAuthor.NAME || updatedAuthor.name;
+      if (rawName) dataToUpdate.name = rawName.toLowerCase();
+
+      // Intentar obtener la nacionalidad (NATIONALITY o nationality) y normalizar
+      const rawNationality = updatedAuthor.NATIONALITY || updatedAuthor.nationality;
+      if (rawNationality) dataToUpdate.nationality = rawNationality.toLowerCase();
+
+      // 2. Comprobar si hay datos válidos para actualizar
+      if (Object.keys(dataToUpdate).length === 0) {
+          return ResponseFormatter.formatError(`No se proporcionaron datos válidos (name, nationality) para actualizar el autor con ID ${id}.`);
+      }
+      
+      // 3. Pasar SOLO los datos filtrados y normalizados al Modelo
+      const success = AuthorsModel.updateAuthor(id, dataToUpdate); 
       if (success) {
         return ResponseFormatter.formatSuccess(`Autor con ID ${id} actualizado correctamente.`);
       } else {

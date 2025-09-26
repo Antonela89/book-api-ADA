@@ -65,8 +65,12 @@ const PublishersController = {
    */
   addPublisher(newPublisherData) {
     try {
-      // validación de los datos
-      if (!newPublisherData || !newPublisherData.name || !newPublisherData.country) {
+      // 1. Acceso a los datos: Busca las claves en MAYÚSCULAS o minúsculas.
+      const rawName = newPublisherData.NAME || newPublisherData.name;
+      const rawCountry = newPublisherData.COUNTRY || newPublisherData.country;
+
+      // 2. Validación de que existan los datos
+      if (!rawName || !rawCountry) {
         return ResponseFormatter.formatError('Faltan datos obligatorios (name, country).');
       }
 
@@ -77,6 +81,15 @@ const PublishersController = {
 
       PublishersModel.addPublisher(newPublisherData);
       return ResponseFormatter.formatSuccess('Editorial añadida correctamente.', newPublisherData);
+      
+      // 3. Crear el objeto final con las claves en minúsculas (lo que el modelo espera).
+      const publisherToSave = { 
+          name: rawName.toLowerCase(), 
+          country: rawCountry.toLowerCase() 
+      };
+
+      PublishersModel.addPublisher(publisherToSave);
+      return ResponseFormatter.formatSuccess('Editorial añadida correctamente.', publisherToSave);
     } catch (error) {
       console.error('Error en addPublisher:', error);
       return ResponseFormatter.formatError('Ocurrió un error al añadir la editorial.');
