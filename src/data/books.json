@@ -38,5 +38,21 @@
     "publisherId": "9l69n22k-63k6-4j5j-8896-j625k0i59k65",
     "year": 1870,
     "genre": "Aventura"
+  },
+  {
+    "title": "mama",
+    "authorId": "5dd81749-7619-4468-9c04-46d474d7f960",
+    "publisherId": "2c450227-901c-4030-b273-0cece42538ee",
+    "year": 1222,
+    "genre": "jhkj",
+    "id": "e9a23d5a-e939-43cd-af43-71c1116c4f4f"
+  },
+  {
+    "title": "hola",
+    "authorId": "d809abb8-6a0d-4cc5-88a8-aaaea7e28c87",
+    "publisherId": "2c450227-901c-4030-b273-0cece42538ee",
+    "year": 1982,
+    "genre": "as",
+    "id": "9faabab7-7ec0-46c0-888d-23d49f1c784b"
   }
 ]

@@ -1,0 +1,44 @@
+* [33mb270c02[m[33m ([m[1;36mHEAD -> [m[1;32mgabriela[m[33m, [m[1;31morigin/gabriela[m[33m, [m[1;31morigin/Antonela[m[33m, [m[1;32mtest[m[33m, [m[1;32mAntonela[m[33m)[m archivo readme.md
+* [33me879729[m archivo de test automático
+* [33mca4b8c8[m metodo ver por id
+* [33mb06baec[m comentarios y JSdocs
+* [33md5fa55a[m comentarios  JSdocs en vista
+* [33m947b100[m JSDocs y comentarios en controllers
+* [33mcb1434d[m comentarios del código en models
+* [33m675b53a[m correcion de JsDocs y comentarios
+* [33m57357f4[m respuesta en consola cuando el id ingresa vacio para elliminar o editar
+* [33mca05a17[m se eliminio en ayuda el formato json
+* [33m27b57a5[m obtencion de comandos y parametros para pasar a los controladores
+* [33m4548dda[m prueba y correción para editar
+* [33mf2294bd[m respuesta que contempla año y genero
+* [33m7db6bf1[m se agrego opcion de editar
+* [33mf108631[m prueba y correcion para agregar libro se añadieron year y genre
+* [33m2f888f1[m prueba: agregar autor
+* [33m0208280[m ID automatico con UUID
+* [33m21ea782[m addPublisher con ID automático- UUID
+* [33m8d388f7[m cambio nombre metodo name por title
+* [33m0fc467e[m busqueda por nombre de estricto(===) a parcial (includes())
+* [33m92b41cd[m correcion nombre metodo delete y getAll
+* [33me99ed67[m correccion de nombre metodo
+* [33m2031fa6[m manejo de menu y de comando ayuda
+* [33m12a9e01[m cambio en saludo inicial
+* [33mf262e72[m cambio de nombe de metodo getAuthors
+* [33md33eab1[m se agrego año y genero en formateo del libro
+* [33m680136a[m cambios en datos de json con persistencia e id de36 caracteres
+* [33m1e569cd[m correcion de client
+* [33meb59a4c[m correcion de server
+* [33md37c4b8[m correcio }n en importacion de archivos y nombres de objetos
+* [33m31d26ae[m agregado de metodos buscar por nombre o titulo, buscar por id, mostrar todas las coincidencias,
+* [33m6bc1eb6[m cambio de impresion de datos como tabla
+* [33m9972d1c[m agregado de delete, findByName, update
+* [33ma78a80b[m encapsulamiento de metodos en un objeto posibilidad de agrupar manejo de archivos en utils.js crear un modelo base para los demas modelos
+*   [33mbe75501[m Merge branch 'Antonela' of https://github.com/Antonela89/api-ADA into Antonela
+[32m|[m[33m\[m  
+[32m|[m *   [33mf154a05[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge pull request #1 from Antonela89/feature-archivos-publishers
+[32m|[m [34m|[m[35m\[m  
+[32m|[m [34m|[m * [33mcf8ec40[m creacion de archivos base para publishers
+[32m|[m [34m|[m[34m/[m  
+* [34m|[m [33me3036c8[m creacion de archivos base para publishers
+* [34m|[m [33m901e3a1[m se agregan datos principales
+[34m|[m[34m/[m  
+* [33m14d81c8[m[33m ([m[1;32mmain[m[33m)[m creacion de archivos base

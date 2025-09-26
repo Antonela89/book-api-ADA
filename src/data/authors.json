@@ -5,11 +5,6 @@
     "nationality": "Colombiana"
   },
   {
-    "id": "2e92g55d-96d9-4c8c-8129-c958d3b82d98",
-    "name": "Miguel de Cervantes",
-    "nationality": "Española"
-  },
-  {
     "id": "3f03h66e-07e0-4d9d-8230-d069e4c93e09",
     "name": "Isabel Allende",
     "nationality": "Chilena"
@@ -33,5 +28,10 @@
     "name": "Julio Cortázar",
     "nationality": "Argentina",
     "id": "5c526ba5-45bf-4930-8074-2b84eb62a856"
+  },
+  {
+    "name": "maria gabriela",
+    "nationality": "argentina",
+    "id": "01d1a058-9fb1-482d-8eaa-c895c824f98a"
   }
 ]
