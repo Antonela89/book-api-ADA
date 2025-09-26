@@ -29,6 +29,17 @@ function formatBookData(book) {
   };
 }
 
+/**
+ * Convierte un string a formato Capital Case.
+ * ej: "jorge luis borges" -> "Jorge Luis Borges"
+ * @param {string} str - El string a convertir.
+ * @returns {string} El string formateado.
+ */
+function toCapitalCase(str) {
+  if (!str) return '';
+  return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
+
 // Creación de objeto de para encapsular metodos relacionados con libros
 const BooksController = {
   /**
@@ -118,11 +129,11 @@ const BooksController = {
 
       // Creación del objeto a guardar
       const bookToSave = {
-        title: rawTitle.toLowerCase(),
+        title: toCapitalCase(rawTitle),
         authorId: authors[0].id,
         publisherId: publishers[0].id,
         year: parseInt(rawYear),
-        genre: rawGenre.toLowerCase()
+        genre: toCapitalCase(rawGenre)
       };
 
       // guardado del libro.
@@ -150,13 +161,13 @@ const BooksController = {
       // Filtramos y normalizamos solo los campos permitidos.
       const dataToUpdate = {};
       const rawTitle = updatedBookData.TITLE || updatedBookData.title;
-      if (rawTitle) dataToUpdate.title = rawTitle.toLowerCase();
+      if (rawTitle) dataToUpdate.title = toCapitalCase(rawTitle);
 
       const rawYear = updatedBookData.YEAR || updatedBookData.year;
       if (rawYear) dataToUpdate.year = parseInt(rawYear);
 
       const rawGenre = updatedBookData.GENRE || updatedBookData.genre;
-      if (rawGenre) dataToUpdate.genre = rawGenre.toLowerCase();
+      if (rawGenre) dataToUpdate.genre = toCapitalCase(rawGenre);
 
       if (Object.keys(dataToUpdate).length === 0) {
         return ResponseFormatter.formatError("No se proporcionaron datos válidos (title, year, genre) para actualizar.");

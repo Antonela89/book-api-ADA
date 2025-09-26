@@ -7,6 +7,17 @@ import { AuthorsModel } from '../models/authorsModel.js';
 import { BooksModel } from '../models/booksModel.js';
 import { ResponseFormatter } from '../views/responseFormatter.js';
 
+/**
+ * Convierte un string a formato Capital Case.
+ * ej: "jorge luis borges" -> "Jorge Luis Borges"
+ * @param {string} str - El string a convertir.
+ * @returns {string} El string formateado.
+ */
+function toCapitalCase(str) {
+  if (!str) return '';
+  return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
+
 // Creación del objeto para encapsular los métodos relacionados con autores.
 const AuthorsController = {
   /**
@@ -81,8 +92,8 @@ const AuthorsController = {
 
       // Creamos el objeto final con las claves y valores normalizados (todo en minúsculas).
       const authorToSave = {
-        name: rawName.toLowerCase(),
-        nationality: rawNationality.toLowerCase()
+        name: toCapitalCase(rawName),
+        nationality: toCapitalCase(rawNationality)
       };
 
       // Regla de negocio: verificamos si ya existe un autor con ese nombre.
@@ -111,10 +122,10 @@ const AuthorsController = {
       // Filtramos y normalizamos solo los campos que nos interesan.
       const dataToUpdate = {};
       const rawName = updatedAuthorData.NAME || updatedAuthorData.name;
-      if (rawName) dataToUpdate.name = rawName.toLowerCase();
+      if (rawName) dataToUpdate.name = toCapitalCase(rawName);
 
       const rawNationality = updatedAuthorData.NATIONALITY || updatedAuthorData.nationality;
-      if (rawNationality) dataToUpdate.nationality = rawNationality.toLowerCase();
+      if (rawNationality) dataToUpdate.nationality = toCapitalCase(rawNationality);
 
       // Regla de negocio: si no se pasó ningún dato válido, devolvemos un error.
       if (Object.keys(dataToUpdate).length === 0) {

@@ -6,6 +6,17 @@ import { PublishersModel } from '../models/publishersModel.js';
 import { BooksModel } from '../models/booksModel.js';
 import { ResponseFormatter } from '../views/responseFormatter.js';
 
+/**
+ * Convierte un string a formato Capital Case.
+ * ej: "jorge luis borges" -> "Jorge Luis Borges"
+ * @param {string} str - El string a convertir.
+ * @returns {string} El string formateado.
+ */
+function toCapitalCase(str) {
+  if (!str) return '';
+  return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
+
 // Creamos el objeto para agrupar todos los métodos relacionados con editoriales.
 const PublishersController = {
   /**
@@ -77,8 +88,8 @@ const PublishersController = {
 
       // Creamos el objeto final con valores normalizados.
       const publisherToSave = {
-        name: rawName.toLowerCase(),
-        country: rawCountry.toLowerCase()
+        name: toCapitalCase(rawName),
+        country: toCapitalCase(rawCountry)
       };
 
       // Regla de negocio: verificamos si ya existe.
@@ -107,10 +118,10 @@ const PublishersController = {
       // Filtramos y normalizamos los datos de entrada.
       const dataToUpdate = {};
       const rawName = updatedPublisherData.NAME || updatedPublisherData.name;
-      if (rawName) dataToUpdate.name = rawName.toLowerCase();
+      if (rawName) dataToUpdate.name = toCapitalCase(rawName);
 
       const rawCountry = updatedPublisherData.COUNTRY || updatedPublisherData.country;
-      if (rawCountry) dataToUpdate.country = rawCountry.toLowerCase();
+      if (rawCountry) dataToUpdate.country = toCapitalCase(rawCountry);
 
       // Regla de negocio: si no se pasaron datos válidos, devolvemos un error.
       if (Object.keys(dataToUpdate).length === 0) {
