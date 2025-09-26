@@ -36,14 +36,61 @@ function handleServerResponse(data) {
     return;
   }
 
-  // Si 'nextAction' tiene un valor, estamos en medio de un flujo de edición/eliminación.
+  // Si 'nextAction' tiene un valor, estamos en medio de un flujo de varios pasos.
   if (nextAction) {
+    const currentAction = nextAction;
+    nextAction = null; // Limpiamos el estado inmediatamente.
+
+    // --- LÓGICA CORREGIDA PARA EL FLUJO DE AGREGAR ---
+    if (currentAction.command.startsWith('ADD_')) {
+      // Si la búsqueda inicial NO devuelve un error, es porque SÍ encontró duplicados.
+      if (!response.startsWith('❌ Error:')) {
+        console.log('\n--- Búsqueda de Duplicados ---');
+        console.log(response); // Mostramos los duplicados encontrados UNA SOLA VEZ.
+        console.log('----------------------------------');
+        console.log(`\n❌ Error: Ya existe un ítem con ese nombre/título.`);
+        setTimeout(showMenu, 500);
+        return;
+      }
+
+      // Si la respuesta fue un error (ej. "no se encontró"), significa que NO hay duplicados.
+      // Procedemos a pedir el resto de los datos sin mostrar ese error al usuario.
+      if (currentAction.command === 'ADD_AUTHOR_DETAILS') {
+        rl.question(`Nacionalidad para "${currentAction.name}": `, (nationality) => {
+          const newData = { name: currentAction.name, nationality: nationality.trim() };
+          client.write(`POST AUTHOR ${JSON.stringify(newData)}`);
+        });
+      } else if (currentAction.command === 'ADD_PUBLISHER_DETAILS') {
+        rl.question(`País para "${currentAction.name}": `, (country) => {
+          const newData = { name: currentAction.name, country: country.trim() };
+          client.write(`POST PUBLISHER ${JSON.stringify(newData)}`);
+        });
+      } else if (currentAction.command === 'ADD_BOOK_DETAILS') {
+        rl.question(`Nombre exacto del autor para "${currentAction.title}": `, (authorName) => {
+          rl.question('Nombre exacto de la editorial: ', (publisherName) => {
+            rl.question('Año de publicación: ', (year) => {
+              rl.question('Género: ', (genre) => {
+                const newData = {
+                  title: currentAction.title,
+                  authorName: authorName.trim(),
+                  publisherName: publisherName.trim(),
+                  year: parseInt(year.trim(), 10),
+                  genre: genre.trim()
+                };
+                client.write(`POST BOOK ${JSON.stringify(newData)}`);
+              });
+            });
+          });
+        });
+      }
+      return; // Salimos para esperar la siguiente interacción del usuario.
+    }
+
+    // --- LÓGICA PARA LOS FLUJOS DE EDITAR (PUT) Y ELIMINAR (DELETE) ---
+    // Para estos flujos, siempre queremos mostrar el resultado de la búsqueda.
     console.log('\n--- Resultados de la Búsqueda ---');
     console.log(response);
     console.log('---------------------------------------');
-
-    const currentAction = nextAction;
-    nextAction = null;
 
     // Si la búsqueda falló, detenemos el flujo y volvemos al menú.
     if (response.startsWith('❌ Error:')) {
@@ -53,15 +100,15 @@ function handleServerResponse(data) {
     }
 
     // Si la búsqueda tuvo éxito, pedimos el ID para la acción final.
-    rl.question('Ingresa el ID (completo) del elemento que deseas modificar: ', (id) => {
+    rl.question('Ingresa el ID (completo) del elemento que deseas modificar o eliminar: ', (id) => {
       if (!id.trim()) {
         console.log('\nOperación cancelada. Volviendo al menú principal.');
         showMenu();
         return;
       }
-      
+
       const { command, serverCategory } = currentAction;
-      
+
       // Ejecuta la acción final (PUT o DELETE) con el ID.
       if (command === 'PUT') {
         if (serverCategory === 'AUTHOR') askForUpdatedAuthorData(id.trim());
@@ -74,7 +121,7 @@ function handleServerResponse(data) {
 
     return; // Salimos porque ya hemos manejado la respuesta dentro de este flujo.
   }
-  
+
   // Para respuestas a comandos de un solo paso, simplemente mostramos y volvemos al menú.
   console.log('\n--- Respuesta del Servidor ---');
   console.log(response);
@@ -157,7 +204,7 @@ function askCategory(command) {
     } else if (command === 'GET_ID') {
       askForId('GET', serverCategory, clientCategory);
     } else if (command === 'POST') {
-        askForNewItemData('POST', serverCategory, clientCategory);
+      askForNewItemData(clientCategory);
     } else { // PUT o DELETE inician el flujo de varios pasos
       initiateMultiStepProcess(command, serverCategory, clientCategory);
     }
@@ -213,50 +260,30 @@ function initiateMultiStepProcess(command, serverCategory, clientCategory) {
 // (Estas funciones piden los datos al usuario y construyen el comando final)
 
 /**
- * Guía al usuario de forma interactiva para ingresar los datos de un nuevo ítem
- * y construye el comando POST final para enviarlo al servidor.
- * @param {string} command - El comando a ejecutar ('POST').
- * @param {string} serverCategory - La categoría para el servidor (ej. 'AUTHOR').
+ * Guía al usuario para ingresar los datos de un nuevo ítem, verificando duplicados al principio del flujo.
  * @param {string} clientCategory - La categoría para el usuario (ej. 'autor').
  */
-function askForNewItemData(command, serverCategory, clientCategory) {
-  // La variable 'clientCategory' se usa para los prompts en español.
+function askForNewItemData(clientCategory) {
   if (clientCategory === 'autor') {
-    const newData = {};
-    rl.question('Nombre del autor: ', (name) => {
-      newData.name = name.trim();
-      rl.question('Nacionalidad: ', (nationality) => {
-        newData.nationality = nationality.trim();
-        // Construimos el comando final usando los parámetros recibidos.
-        client.write(`${command} ${serverCategory} ${JSON.stringify(newData)}`);
-      });
+    rl.question('Nombre del nuevo autor: ', (name) => {
+      // 1. Verificación temprana de duplicados
+      client.write(`SEARCH AUTHOR ${name.trim()}`);
+      // Guardamos los datos para el siguiente paso en nextAction
+      nextAction = { command: 'ADD_AUTHOR_DETAILS', name: name.trim() };
     });
   } else if (clientCategory === 'editorial') {
-    const newData = {};
-    rl.question('Nombre de la editorial: ', (name) => {
-      newData.name = name.trim();
-      rl.question('País: ', (country) => {
-        newData.country = country.trim();
-        client.write(`${command} ${serverCategory} ${JSON.stringify(newData)}`);
-      });
+    rl.question('Nombre de la nueva editorial: ', (name) => {
+      // 1. Verificación temprana de duplicados
+      client.write(`SEARCH PUBLISHER ${name.trim()}`);
+      nextAction = { command: 'ADD_PUBLISHER_DETAILS', name: name.trim() };
     });
   } else if (clientCategory === 'libro') {
-    const newData = {};
-    rl.question('Título del libro: ', (title) => {
-      newData.title = title.trim();
-      rl.question('Nombre exacto del autor: ', (authorName) => {
-        newData.authorName = authorName.trim();
-        rl.question('Nombre exacto de la editorial: ', (publisherName) => {
-          newData.publisherName = publisherName.trim();
-          rl.question('Año de publicación: ', (year) => {
-            newData.year = parseInt(year.trim(), 10);
-            rl.question('Género: ', (genre) => {
-              newData.genre = genre.trim();
-              client.write(`${command} ${serverCategory} ${JSON.stringify(newData)}`);
-            });
-          });
-        });
-      });
+    // AVISO PREVIO PARA EL USUARIO
+    console.log('\nINFO: Para agregar un libro, el autor y la editorial ya deben existir.');
+    rl.question('Título del nuevo libro: ', (title) => {
+      // 1. Verificación temprana de duplicados
+      client.write(`SEARCH BOOK ${title.trim()}`);
+      nextAction = { command: 'ADD_BOOK_DETAILS', title: title.trim() };
     });
   }
 }
@@ -297,6 +324,7 @@ function askForUpdatedPublisherData(id) {
 
 function askForUpdatedBookData(id) {
   const updatedData = {};
+  console.log('\nINFO: Solo se puede modificar el título, año y género. Para cambiar autor o editorial, elimina y vuelve a crear el libro o cambie cada cateogría');
   rl.question('Nuevo título (deja en blanco para no cambiar): ', (title) => {
     if (title.trim()) updatedData.title = title.trim();
     rl.question('Nuevo año de publicación (deja en blanco para no cambiar): ', (year) => {
