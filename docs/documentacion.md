@@ -8,84 +8,75 @@ Este documento proporciona un análisis técnico detallado de la arquitectura y 
 
 El proyecto está diseñado siguiendo estrictamente el patrón de diseño **MVC** para garantizar una clara separación de responsabilidades, lo que resulta en un código más limpio, mantenible y escalable.
 
-*   **Modelo (`/src/models`)**: Es la capa de acceso a datos. Su única responsabilidad es interactuar directamente con la "base de datos" (los archivos `.json`). Contiene toda la lógica para leer, escribir, buscar, actualizar y eliminar registros. No tiene conocimiento de las peticiones del usuario ni de cómo se mostrarán los datos.
-
-*   **Vista (`/src/views`)**: Es la capa de presentación. Su única responsabilidad es tomar los datos que le entrega el Controlador y darles un formato legible para la terminal. En este proyecto, la vista se materializa en el archivo `responseFormatter.js`, que construye las respuestas de éxito, error y las tablas de datos.
-
-*   **Controlador (`/src/controllers`)**: Es la capa de lógica de negocio y el "cerebro" de la aplicación. Actúa como intermediario: recibe peticiones del Servidor, le pide los datos necesarios al Modelo, aplica las reglas de negocio (ej: verificar que un autor no tenga libros antes de eliminarlo) y finalmente le pasa los datos a la Vista para que prepare la respuesta final.
+*   **Modelo (`/src/models`)**: Es la capa de acceso a datos. Su única responsabilidad es interactuar directamente con la "base de datos" (los archivos `.json`).
+*   **Vista (`/src/views`)**: Es la capa de presentación. Su única responsabilidad es tomar los datos que le entrega el Controlador y darles un formato legible para la terminal.
+*   **Controlador (`/src/controllers`)**: Es la capa de lógica de negocio y el "cerebro" de la aplicación. Actúa como intermediario entre el Servidor, el Modelo y la Vista.
 
 ## 3. Análisis por Capas y Archivos
 
 ### 3.1. Capa de Modelos (`/src/models`)
 
-Para la capa de modelos, se exploraron dos arquitecturas con diferentes niveles de abstracción y reutilización de código.
+Para la capa de modelos, se exploraron dos arquitecturas con diferentes niveles de abstracción.
 
 #### **Versión 1: Modelos Autónomos (Enfoque Directo)**
 
-Esta es la implementación base, donde cada modelo (`authorsModel.js`, `booksModel.js`, `publishersModel.js`) es un archivo completamente independiente que contiene toda su propia lógica para interactuar con el sistema de archivos (`fs`).
+Esta es la implementación base, donde cada modelo es un archivo independiente.
+*   **Ventajas:** Es un enfoque muy directo y fácil de entender.
+*   **Desventajas:** Conduce a una significativa **duplicación de código**, violando el **principio DRY (Don't Repeat Yourself)**.
 
-*   **Ventajas:** Es un enfoque muy directo y fácil de entender. Cada archivo es autocontenido.
-*   **Desventajas:** Conduce a una significativa **duplicación de código**. La lógica para leer, escribir, actualizar y eliminar es casi idéntica en los tres archivos, violando el **principio DRY (Don't Repeat Yourself)**.
-
-authorsModel.js           |  publishersModel.js
-:-------------------------:|:-------------------------:
-![](./img/models-img/authors.png)  |  ![](./img/models-img/publishers.png)
-
----
+<div style="display: flex; justify-content: space-around;">
+  <figure>
+    <img src="./img/models-img/authors.png" alt="authorsModel.js" width="400"/>
+    <figcaption><code>authorsModel.js</code></figcaption>
+  </figure>
+  <figure>
+    <img src="./img/models-img/publishers.png" alt="publishersModel.js" width="400"/>
+    <figcaption><code>publishersModel.js</code></figcaption>
+  </figure>
+</div>
 
 #### **Versión 2: Arquitectura Ideal (Patrón Factory y Principio DRY)**
 
-Para solucionar el problema de la duplicación de código, se propone una arquitectura más avanzada que abstrae la lógica común.
+Para solucionar la duplicación, se propone una arquitectura más avanzada.
 
 **`utils/utils.js` (Módulo de Utilidades)**
 
-Este archivo es la base de la abstracción. Centraliza todas las operaciones de bajo nivel con el sistema de archivos.
-*   **Responsabilidad Única:** Su única tarea es leer y escribir archivos JSON.
-*   **Robustez:** Incluye un manejo de errores robusto, como el control del caso `ENOENT` (archivo no encontrado).
+Centraliza todas las operaciones de bajo nivel con el sistema de archivos, siguiendo el Principio de Responsabilidad Única.
 
-<figure>
-<img src="./img/models-img/utils.png" alt="utils.js"/>
-<figcaption>Archivo utils.js</figcaption>
+<figure align="center">
+  <img src="./img/models-img/utils.png" alt="utils.js"/>
+  <figcaption>Archivo <code>utils.js</code></figcaption>
 </figure>
-
----
 
 **`models/createDataModel.js` (Fábrica de Modelos)**
 
-Este archivo implementa el **patrón de diseño Factory**. Es una función que construye un objeto Modelo completamente funcional para cualquier archivo JSON.
-*   **Eliminación de Duplicación:** Toda la lógica CRUD está escrita una sola vez.
-*   **Mantenibilidad:** Los cambios se hacen en un solo lugar y todos los modelos se benefician.
+Implementa el **patrón de diseño Factory** para construir un objeto Modelo completamente funcional, eliminando el código repetido y mejorando la mantenibilidad.
 
-<figure>
-<img src="./img/models-img/fabrica.png" alt="createDataModel.js"/>
-<figcaption>Archivo createDataModel.js</figcaption>
+<figure align="center">
+  <img src="./img/models-img/fabrica.png" alt="createDataModel.js"/>
+  <figcaption>Archivo <code>createDataModel.js</code></figcaption>
 </figure>
-
----
 
 **Modelo Final (`authorsModel.js` usando la Fábrica)**
 
 El resultado es que los modelos específicos se vuelven increíblemente simples y declarativos.
 
-<figure>
-<img src="./img/models-img/authors-ideal.png" alt="authors2.js"/>
-<figcaption>AuthorsModel usando una "plantilla" de modelos</figcaption>
+<figure align="center">
+  <img src="./img/models-img/authors-fabrica.png" alt="authors.js"/>
+  <figcaption><code>AuthorsModel</code> usando la "fábrica" de modelos.</figcaption>
 </figure>
 
 ---
 
 ### 3.2. Capa de Vistas (`/src/views`)
 
-La capa de Vistas se centraliza en `views/responseFormatter.js`, que se encarga de la presentación de los datos.
+La capa de Vistas se centraliza en `views/responseFormatter.js`.
 
-*   **Funcionalidad Clave:**
-    *   **Formato Consistente:** `formatSuccess()` y `formatError()` usan emojis (`✅`, `❌`) para una retroalimentación visual clara.
-    *   **Presentación Inteligente:** `formatSuccess()` detecta si los datos son un array (para mostrarlos como tabla) o un objeto (para mostrarlo como JSON).
-    *   **Generación de Tablas Dinámicas:** La función `formatAsTable()` se adapta dinámicamente a cualquier tipo de dato, calculando el ancho de las columnas para una alineación perfecta.
+*   **Funcionalidad Clave:** `formatSuccess()`, `formatError()` y `formatAsTable()` para una presentación de datos consistente, inteligente y dinámica. La función `formatAsTable()` se adapta a cualquier array de objetos, calculando anchos de columna para una alineación perfecta.
 
-<figure>
-<img src="./img/views-img/listarLibros.png" alt="listarLibros"/>
-<figcaption> Ejemplo de la salida generada por `formatAsTable()`. La Vista se adapta dinámicamente para mostrar todas las columnas de los libros.</figcaption>
+<figure align="center">
+  <img src="./img/views-img/listarLibros.png" alt="listarLibros"/>
+  <figcaption> Ejemplo de la salida generada por <code>formatAsTable()</code>.</figcaption>
 </figure>
 
 ---
@@ -94,19 +85,19 @@ La capa de Vistas se centraliza en `views/responseFormatter.js`, que se encarga 
 
 La capa de Controladores es el **"cerebro"** de la aplicación, donde reside toda la lógica de negocio.
 
-*   **Rol y Responsabilidades:**
-    *   **Orquestación:** Dirigen el flujo de una petición entre el Modelo y la Vista.
-    *   **Lógica de Negocio:** Implementan las reglas clave como la prevención de duplicados, la "hidratación" de datos (reemplazar IDs por nombres) y la restricción de eliminación.
-    *   **Validación de Datos:** Se aseguran de que los datos de entrada sean completos y correctos.
+*   **Lógica de Negocio Clave:**
+    *   **Prevención de Duplicados:** No permite agregar un ítem si ya existe uno con el mismo nombre/título.
+    *   **"Hidratación" de Datos:** Reemplaza los IDs de los libros por los nombres de autor y editorial.
+    *   **Restricción de Eliminación:** Impide eliminar un autor o editorial si tienen libros asociados, protegiendo la integridad de los datos.
 
-<figure>
-<img src="./img/controllers-img/deleteAuthors.png" alt="deleteAuthors"/>
-<figcaption> Implementación de la "restricción de eliminación". El controlador interactúa con `BooksModel` para asegurarse de que un autor no tenga libros asociados antes de proceder con su eliminación.</figcaption>
+<figure align="center">
+  <img src="./img/controllers-img/deleteAuthor.png" alt="deleteAuthors"/>
+  <figcaption> Implementación de la "restricción de eliminación" en <code>AuthorsController.js</code>.</figcaption>
 </figure>
 
-<figure>
-<img src="./img/controllers-img/addBook.png" alt="addBook"/>
-<figcaption> Ejemplo de lógica de negocio compleja. El método `addBook` valida duplicados y verifica que el autor y la editorial existan antes de guardar los datos.</figcaption>
+<figure align="center">
+  <img src="./img/controllers-img/addBook.png" alt="addBook"/>
+  <figcaption> Ejemplo de validación múltiple en <code>BooksController.js</code>.</figcaption>
 </figure>
 
 ---
@@ -115,45 +106,46 @@ La capa de Controladores es el **"cerebro"** de la aplicación, donde reside tod
 
 ### 4.1. El Servidor TCP (`server.js`)
 
-Actúa como un **enrutador (router)** delgado y eficiente.
-*   **Responsabilidades:**
-    *   Crea el servidor TCP y maneja múltiples conexiones de clientes.
-    *   Parsea los comandos entrantes para separar la acción de los datos.
-    *   Delega toda la lógica de negocio a los controladores a través de un `switch` principal.
+Actúa como un **enrutador (router)** delgado y eficiente, delegando toda la lógica a los controladores.
 
-<figure>
-<img src="./img/server-img/switch.png" alt="switch - funcion"/>
-<figcaption> El `switch` actúa como el enrutador central, delegando cada comando al método del controlador apropiado.</figcaption>
+*   **Responsabilidades:**
+    *   Crear el servidor TCP y manejar múltiples clientes.
+    *   Parsear los comandos entrantes.
+    *   Delegar la ejecución al controlador apropiado a través de un `switch` principal.
+
+<figure align="center">
+  <img src="./img/server-img/switch.png" alt="switch - funcion"/>
+  <figcaption> El <code>switch</code> actúa como el enrutador central de la aplicación.</figcaption>
+</figure>
+
+### 4.2. La Interfaz de Usuario: El Cliente TCP (`client.js`)
+
+Es la puerta de entrada para el usuario final, enfocado en una buena experiencia de usuario (UX).
+
+*   **Características Clave:**
+    *   **Menús Interactivos Guiados:** Utiliza menús numéricos para una interacción fluida y a prueba de errores.
+    *   **Flujos de Múltiples Pasos (Máquina de Estados):** Utiliza una variable de estado (`nextAction`) para manejar operaciones complejas como "Editar" y "Eliminar".
+    *   **Conexión Persistente:** Mantiene una única conexión con el servidor para mayor eficiencia.
+
+<figure align="center">
+  <img src="./img/client-img/maquina_estados.gif" alt="Flujo de Edición Interactivo"/>
+  <figcaption> Ejemplo de la máquina de estados en acción durante el flujo de edición.</figcaption>
 </figure>
 
 ---
 
-### 4.2. La Interfaz de Usuario: El Cliente TCP (`client.js`)
-
-Es la puerta de entrada para el usuario final.
-*   **Características Clave:**
-    *   **Menús Interactivos Guiados:** Utiliza un sistema de menús y sub-menús numéricos para una UX fluida y a prueba de errores.
-    *   **Flujos de Múltiples Pasos (Máquina de Estados):** Utiliza una variable de estado (`nextAction`) para manejar operaciones complejas como "Editar" y "Eliminar", donde primero se busca un ítem y luego se actúa sobre él.
-    *   **Conexión Persistente:** Mantiene una única conexión con el servidor para mayor eficiencia.
-
-<figure>
-<img src="./img/client-img/maquina de estados.gif" alt="Flujo de Edición Interactivo"/>
-<figcaption> Ejemplo de la máquina de estados. Tras la búsqueda, el cliente recuerda que la acción pendiente es "editar" y procede a pedir el ID, creando un flujo de trabajo continuo.</figcaption>
-</figure>
-
---- 
-
 ## 5. Pruebas Automatizadas (`test.js`)
 
 Para garantizar la calidad y el correcto funcionamiento de la API, se ha creado un script de pruebas automatizado.
-*   **Propósito:** Ejecuta una secuencia predefinida de comandos que cubren el ciclo CRUD completo y las reglas de negocio, como la prevención de duplicados y la restricción de eliminación.
+
+*   **Propósito:** Ejecuta una secuencia predefinida de comandos que cubren el ciclo CRUD completo y las reglas de negocio.
 *   **Funcionalidad:** Sirve como una **prueba de regresión**, permitiendo verificar rápidamente que nuevos cambios no hayan roto la funcionalidad existente.
 
---- 
+---
 
 ## 6. Diagrama de Flujo de una Petición (Ej: Eliminar un Autor)
 
-A continuación se muestra un diagrama de flujo que ilustra la secuencia completa de eventos e interacciones entre las diferentes capas de la aplicación cuando un usuario intenta eliminar un autor.
+A continuación se muestra un diagrama de flujo que ilustra la secuencia completa de interacciones entre las capas de la aplicación.
 
 ```mermaid
 sequenceDiagram
@@ -165,8 +157,8 @@ sequenceDiagram
     participant AuthorsModel
     participant ResponseFormatter
 
-    Usuario->>+Client: 1. Elige 'Eliminar', categoría 'autor', busca "Borges"
-    Client->>+Server: 2. Envía comando: "buscar autor Borges"
+    Usuario->>+Client: 1. Elige 'Eliminar', 'autor', busca "Borges"
+    Client->>+Server: 2. Envía comando: "SEARCH AUTHOR Borges"
     Server->>+AuthorsController: 3. Enruta a getAuthorsByName("Borges")
     AuthorsController->>+AuthorsModel: 4. Llama a findAuthorsByName("Borges")
     AuthorsModel-->>-AuthorsController: 5. Devuelve [Array de autores]
@@ -176,16 +168,16 @@ sequenceDiagram
     Server-->>-Client: 9. Envía respuesta al cliente
     Client-->>-Usuario: 10. Muestra la lista y pide el ID
     Usuario->>+Client: 11. Ingresa el ID del autor a eliminar
-    Client->>+Server: 12. Envía comando: "eliminar autor <ID>"
+    Client->>+Server: 12. Envía comando: "DELETE AUTHOR <ID>"
     Server->>+AuthorsController: 13. Enruta a deleteAuthor(<ID>)
-    AuthorsController->>+BooksModel: 14. Llama a findBooksByAuthorId(<ID>) para verificar dependencias
-    BooksModel-->>-AuthorsController: 15. Devuelve [Array de libros] (vacío en este caso)
+    AuthorsController->>+BooksModel: 14. Llama a findBooksByAuthorId(<ID>)
+    BooksModel-->>-AuthorsController: 15. Devuelve [Array de libros] (vacío)
     Note right of AuthorsController: Lógica de Restricción:<br/>Si el array no estuviera vacío,<br/>se detendría aquí con un error.
     AuthorsController->>+AuthorsModel: 16. Llama a deleteAuthor(<ID>)
     AuthorsModel-->>-AuthorsController: 17. Devuelve 'true' (éxito)
-    AuthorsController->>+ResponseFormatter: 18. Pasa el mensaje de éxito para formatear
-    ResponseFormatter-->>-AuthorsController: 19. Devuelve mensaje de éxito formateado
+    AuthorsController->>+ResponseFormatter: 18. Pasa el mensaje de éxito
+    ResponseFormatter-->>-AuthorsController: 19. Devuelve mensaje formateado
     AuthorsController-->>-Server: 20. Devuelve respuesta final
     Server-->>-Client: 21. Envía respuesta final
-    Client-->>-Usuario: 22. Muestra "Autor eliminado correctamente"
-   ```
+    Client-->>-Usuario: 22. Muestra "Autor eliminado"
+    ```
