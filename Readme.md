@@ -6,58 +6,72 @@ La aplicación sigue el patrón de diseño **Modelo-Vista-Controlador (MVC)** pa
 
 ## ✨ Características Principales
 
-*   **Gestión CRUD Completa:** Soporte para Crear, Leer, Actualizar y Eliminar (CRUD) para tres categorías de datos: Autores, Libros y Editoriales.
-*   **Cliente de Consola Interactivo:** Una interfaz de usuario amigable con menús numéricos que guía al usuario a través de todas las operaciones, eliminando la necesidad de escribir comandos complejos o JSON manualmente.
-*   **Persistencia de Datos:** La información se almacena de forma persistente en archivos `.json` locales, manejados por el servidor.
-*   **Búsqueda Parcial e Insensible a Mayúsculas:** La funcionalidad de búsqueda permite encontrar ítems incluso si no se escribe el nombre completo.
-*   **Manejo de Relaciones:** El sistema gestiona las relaciones entre libros, autores y editoriales (ej: al agregar un libro, se valida que el autor y la editorial existan).
-*   **Script de Pruebas Automatizado:** Incluye un script (`test.js`) que ejecuta una secuencia de pruebas para verificar la funcionalidad completa del CRUD y el manejo de errores de la API.
+*   **Gestión CRUD Completa:** Soporte para Crear, Leer (listar y ver por ID), Actualizar y Eliminar para tres categorías: Autores, Libros y Editoriales.
+*   **Cliente de Consola Interactivo:** Interfaz de usuario amigable con menús numéricos que guía al usuario a través de todas las operaciones, eliminando la necesidad de escribir comandos complejos o JSON.
+*   **Persistencia de Datos:** La información se almacena en archivos `.json` locales.
+*   **Búsqueda Inteligente:** Búsqueda parcial e insensible a mayúsculas y minúsculas.
+*   **Reglas de Negocio Robustas:**
+    *   **Prevención de Duplicados:** No permite agregar autores, libros o editoriales con nombres/títulos idénticos.
+    *   **Restricción de Eliminación:** Protege la integridad de los datos impidiendo que se elimine un autor o editorial si tienen libros asociados.
+*   **Script de Pruebas Automatizado:** Incluye un script (`test.js`) que ejecuta una secuencia de pruebas para verificar la funcionalidad completa del CRUD y las reglas de negocio.
+
+---
 
 ## 🏛️ Arquitectura del Proyecto
 
-El proyecto está estructurado siguiendo el patrón **Modelo-Vista-Controlador (MVC)** para garantizar un código organizado, desacoplado y fácil de mantener.
+El proyecto está estructurado siguiendo el patrón **Modelo-Vista-Controlador (MVC)**.
 
-*   **`models/` (Modelo):** Es la capa de datos. Su única responsabilidad es interactuar directamente con los archivos `json`. Contiene toda la lógica para leer, escribir, buscar, actualizar y eliminar registros. No sabe nada sobre los comandos del usuario.
-*   **`views/` (Vista):** Es la capa de presentación. Su única responsabilidad es tomar los datos que le pasa el controlador y darles un formato legible para la terminal (por ejemplo, crear las tablas de texto). No realiza ninguna lógica de negocio.
-*   **`controllers/` (Controlador):** Es el "cerebro" de la aplicación. Actúa como intermediario, recibiendo las peticiones del servidor, pidiendo los datos necesarios al modelo, y pasando esos datos a la vista para que prepare la respuesta final. Aquí residen las reglas de negocio (ej: para agregar un libro, primero validar que el autor exista).
-*   **`server.js`:** Actúa como el "enrutador" o punto de entrada. Escucha las conexiones TCP, interpreta los comandos básicos del cliente y los delega al controlador correspondiente.
-*   **`client.js`:** Es la interfaz de usuario final. Mantiene una conexión persistente con el servidor y proporciona un menú interactivo para construir y enviar los comandos.
+*   **`models/` (Modelo):** La capa de datos, responsable de interactuar directamente con los archivos `json`.
+*   **`views/` (Vista):** La capa de presentación (`responseFormatter.js`), responsable de formatear los datos para la terminal.
+*   **`controllers/` (Controlador):** El "cerebro" de la aplicación. Contiene la lógica de negocio y orquesta el flujo entre el Modelo y la Vista.
+*   **`server.js`:** Actúa como el enrutador. Escucha las conexiones TCP y delega las peticiones al controlador adecuado.
+*   **`client.js`:** La interfaz de usuario. Mantiene una conexión persistente y proporciona un menú interactivo.
 
 ### Principio DRY y Reutilización de Código
 
-Durante el desarrollo, se exploraron dos enfoques para la capa de Modelo:
+Se exploraron dos enfoques para la capa de Modelo:
+1.  **Modelos Autónomos:** Funcional pero con duplicación de código.
+2.  **Fábrica de Modelos (Enfoque Ideal):** La solución implementada utiliza un módulo de utilidades (`src/utils/`) y una "fábrica" (`src/models/createDataModel.js`) para centralizar la lógica CRUD, adhiriéndose estrictamente al principio **DRY (Don't Repeat Yourself)**.
 
-1.  **Modelos Autónomos:** Cada modelo (`authorsModel.js`, `booksModel.js`) contiene toda su lógica de lectura/escritura de archivos. Es funcional pero introduce duplicación de código.
-2.  **Fábrica de Modelos (Enfoque Ideal):** Se propone una solución más avanzada utilizando un módulo de utilidades (`utils/utils.js`) y una "fábrica" (`models/createDataModel.js`). Este enfoque centraliza toda la lógica CRUD genérica en un solo lugar, eliminando el código repetido y haciendo el sistema mucho más mantenible y escalable, adhiriéndose estrictamente al principio **DRY (Don't Repeat Yourself)**.
+---
 
 ## 📂 Estructura de Archivos
 
+El proyecto sigue una estructura de carpetas clara y modular, separando las responsabilidades según el patrón MVC.
+
 ```
-book-api/
-├── data/
-│   ├── authors.json
-│   ├── books.json
-│   └── publishers.json
-├── src/
-│   ├── controllers/
-│   │   ├── authorsController.js
-│   │   ├── booksController.js
-│   │   └── publishersController.js
-│   ├── models/
-│   │   ├── authorsModel.js
-│   │   ├── booksModel.js
-|   |   ├── createDataModel.js
-│   │   └── publishersModel.js
-│   └── views/
-│       └── responseFormatter.js
+API-ADA/
 ├── .gitignore
-├── client.js
-├── package.json
+├── client.js               # Interfaz de usuario interactiva
 ├── package-lock.json
-├── Readme.md
-├── server.js
-└── test.js
+├── package.json
+├── README.md               # Documentación principal
+├── server.js               # Punto de entrada del servidor TCP
+├── test.js                 # Script de pruebas automatizadas
+├── docs/
+│   ├── img/                # Carpeta para imágenes de la documentación
+│   └── documentacion.md    # Documentación técnica detallada
+└── src/
+    ├── controllers/
+    │   ├── authorsController.js
+    │   ├── booksController.js
+    │   └── publishersController.js
+    ├── data/
+    │   ├── authors.json
+    │   ├── books.json
+    │   └── publishers.json
+    ├── models/
+    │   ├── authorsModel.js
+    │   ├── booksModel.js
+    │   ├── createDataModel.js
+    │   └── publishersModel.js
+    ├── utils/
+    │   └── utils.js
+    └── views/
+        └── responseFormatter.js
 ```
+
+---
 
 ## 🚀 Instalación y Configuración
 
@@ -66,7 +80,7 @@ Sigue estos pasos para poner en marcha el proyecto.
 ### Prerrequisitos
 
 *   [Node.js](https://nodejs.org/) (versión 18 o superior recomendada)
-*   npm (generalmente se instala con Node.js)
+*   npm (incluido con Node.js)
 
 ### Pasos
 
@@ -76,13 +90,15 @@ Sigue estos pasos para poner en marcha el proyecto.
     ```
 2.  **Navega a la carpeta del proyecto:**
     ```bash
-    cd book-api
+    cd book-api-ADA
     ```
 3.  **Instala las dependencias:**
-    Este proyecto solo requiere la librería `uuid` para generar identificadores únicos.
+    Este proyecto solo requiere la librería `uuid`.
     ```bash
     npm install
     ```
+
+---
 
 ## 🏃 Modo de Uso
 
@@ -90,12 +106,13 @@ La aplicación requiere dos terminales: una para el servidor y otra para el clie
 
 ### 1. Iniciar el Servidor
 
-En tu primera terminal, ejecuta el siguiente comando para iniciar el servidor. Permanecerá en espera de conexiones.
+En tu primera terminal, ejecuta el siguiente comando.
 
 ```bash
 npm start
 ```
 o alternativamente:
+
 ```bash
 node server.js
 ```
@@ -103,50 +120,31 @@ Verás un mensaje de confirmación: `Servidor TCP escuchando en el puerto 8080`.
 
 ### 2. Iniciar el Cliente Interactivo
 
-En una **segunda terminal**, ejecuta el siguiente comando para iniciar el cliente y conectarte al servidor.
+En una **segunda terminal**, ejecuta el siguiente comando para conectarte al servidor.
 
 ```bash
 node client.js
 ```
-Aparecerá el menú principal y podrás empezar a interactuar con la aplicación.
-
-## 📝 Ejemplos de Uso (Cliente Interactivo)
-
-El cliente te guiará a través de menús numéricos para realizar todas las acciones.
-
-### Ejemplo: Agregar un nuevo autor
-
-1.  En el menú principal, selecciona la opción `3` (Agregar a una categoría).
-2.  En el sub-menú, selecciona `1` (Autor).
-3.  El programa te pedirá: `Nombre del autor:`. Escribe el nombre y presiona Enter.
-4.  Luego te pedirá: `Nacionalidad:`. Escribe la nacionalidad y presiona Enter.
-5.  Recibirás una respuesta del servidor confirmando que el autor fue añadido, incluyendo su nuevo ID.
-
-### Ejemplo: Editar un libro
-
-1.  Primero, busca el libro para obtener su ID. Selecciona la opción `2` (Buscar), luego `2` (Libro), y escribe parte del título.
-2.  El servidor te devolverá una tabla con los resultados y sus IDs. Copia el ID del libro que deseas editar.
-3.  Vuelve al menú principal. Selecciona la opción `4` (Editar en una categoría), y luego `2` (Libro).
-4.  El programa te pedirá: `Ingresa el ID del/de la libro a editar:`. Pega el ID que copiaste y presiona Enter.
-5.  El cliente te guiará para ingresar los nuevos datos (título, año, género), permitiéndote dejar campos en blanco para no cambiarlos.
-6.  Recibirás una confirmación del servidor.
-
-## 🧪 Pruebas Automatizadas
-
-El proyecto incluye un script de pruebas automatizado que verifica el ciclo CRUD completo para la categoría de autores y prueba varios casos de error.
-
-### Cómo ejecutar las pruebas:
-
-1.  Asegúrate de que el **servidor esté corriendo** en una terminal (`npm start`).
-2.  En una **segunda terminal**, ejecuta el siguiente comando:
-    ```bash
-    node test.js
-    ```
-3.  La terminal mostrará el progreso de cada prueba, el comando enviado y la respuesta del servidor, finalizando con un resumen.
+Aparecerá el menú principal para empezar a interactuar con la aplicación.
 
 ---
 
-## 🛠️ Tecnologías usadas
+## 🧪 Pruebas Automatizadas
+
+El proyecto incluye un script que prueba automáticamente el ciclo CRUD y las reglas de negocio.
+
+### Cómo ejecutar las pruebas:
+
+1.  Asegúrate de que el **servidor esté corriendo** en una terminal.
+2.  En una **segunda terminal**, ejecuta:
+    ```bash
+    node test.js
+    ```
+3.  La terminal mostrará el progreso y el resultado de cada prueba.
+
+---
+
+## 🛠️ Tecnologías Usadas
 
 <p>
   <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript"/>
@@ -159,16 +157,22 @@ El proyecto incluye un script de pruebas automatizado que verifica el ciclo CRUD
 
 ## 🧑‍💻 Autoras
 
-- **BORGOGNO, Antonela** [![LinkedIn](https://cdn-icons-png.flaticon.com/24/174/174857.png)](https://www.linkedin.com/in/antonela-borgogno/)  [![GitHub](https://cdn-icons-png.flaticon.com/24/733/733553.png)](https://github.com/Antonela89)
-
-- **MARTINEZ, Gabriela**  [![LinkedIn](https://cdn-icons-png.flaticon.com/24/174/174857.png)](https://www.linkedin.com/in/magamahe/)  [![GitHub](https://cdn-icons-png.flaticon.com/24/733/733553.png)](https://github.com/magamahe)
+| Nombre               | LinkedIn                                                    | GitHub                                         |
+| -------------------- | ----------------------------------------------------------- | ---------------------------------------------- |
+| **BORGOGNO, Antonela** | [antonela-borgogno](https://www.linkedin.com/in/antonela-borgogno/) | [Antonela89](https://github.com/Antonela89)     |
+| **MARTINEZ, Gabriela** | [magamahe](https://www.linkedin.com/in/magamahe/)           | [magamahe](https://github.com/magamahe)         |
 
 ---
 
 ## 📄 Institución Académica
+
 <p align="center">
   <img src="docs/img/logo_ada.png" alt="Logo ADA" width="200"/>
-<center> Programa de formación en desarrollo web, Cohorte intro-js-202504  </center>
-<center>Proyecto educativo sin fines comerciales. Todos los derechos reservados © 2025.</center>
+</p>
+<p align="center">
+  Programa de formación en desarrollo web, Cohorte intro-js-202504
+  <br>
+  Proyecto educativo sin fines comerciales. Todos los derechos reservados © 2025.
+</p>
 
----
+
