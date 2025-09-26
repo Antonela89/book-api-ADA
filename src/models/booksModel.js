@@ -114,7 +114,7 @@ const BooksModel = {
   },
 
   /**
-  * Elimina un editorial por su ID.
+  * Elimina un libro por su ID.
   * @param {string} id El ID del elemento a eliminar.
   * @returns {boolean} True si se eliminó, false si no se encontró.
   */
