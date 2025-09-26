@@ -198,13 +198,15 @@ function askCategory(command) {
 
     // Enrutamos al siguiente paso según el comando seleccionado.
     if (command === 'GET_ALL') {
-      client.write(`GET ${serverCategory}S`); // GET AUTHORS, BOOKS, PUBLISHERS
+      client.write(`GET ${serverCategory}S`);
     } else if (command === 'SEARCH') {
-      askForTerm('SEARCH', serverCategory, clientCategory);
+      // Llama a la nueva función para buscar por término
+      askForTermOrIdToView('SEARCH', serverCategory, clientCategory, false);
     } else if (command === 'GET_ID') {
-      askForId('GET', serverCategory, clientCategory);
+      // Llama a la función para buscar por ID
+      askForTermOrIdToView('GET', serverCategory, clientCategory, true);
     } else if (command === 'POST') {
-      askForNewItemData(clientCategory);
+        askForNewItemData(clientCategory);
     } else { // PUT o DELETE inician el flujo de varios pasos
       initiateMultiStepProcess(command, serverCategory, clientCategory);
     }
@@ -212,29 +214,26 @@ function askCategory(command) {
 }
 
 /**
- * Pide un término de búsqueda para un comando 'SEARCH'.
- * @param {string} command - El comando ('SEARCH').
+ * Pide un término de búsqueda o un ID, unificando la lógica de las funciones anteriores.
+ * @param {string} command - El comando a ejecutar ('GET' para ID o 'SEARCH' para término).
  * @param {string} serverCategory - La categoría para el servidor (ej. 'AUTHOR').
  * @param {string} clientCategory - La categoría para el usuario (ej. 'autor').
+ * @param {boolean} isIdSearch - Si es true, pide un ID; si es false, pide un término de búsqueda.
  */
-function askForTerm(command, serverCategory, clientCategory) {
-  const prompt = clientCategory === 'libro' ? 'Ingresa el Título a buscar: ' : 'Ingresa el Nombre a buscar: ';
-  rl.question(prompt, (term) => {
-    if (term.trim()) client.write(`${command} ${serverCategory} ${term.trim()}`);
-    else { console.log('El término no puede estar vacío.'); showMenu(); }
-  });
-}
+function askForTermOrIdToView(command, serverCategory, clientCategory, isIdSearch) {
+  // Construye el texto de la pregunta dinámicamente
+  const promptText = isIdSearch
+    ? `Ingresa el ID del/de la ${clientCategory} a ver: `
+    : (clientCategory === 'libro' ? 'Ingresa el Título a buscar: ' : 'Ingresa el Nombre a buscar: ');
 
-/**
- * Pide un ID para un comando 'GET' por ID.
- * @param {string} command - El comando ('GET').
- * @param {string} serverCategory - La categoría para el servidor.
- * @param {string} clientCategory - La categoría para el usuario.
- */
-function askForId(command, serverCategory, clientCategory) {
-  rl.question(`Ingresa el ID del/de la ${clientCategory} a ver: `, (id) => {
-    if (id.trim()) client.write(`${command} ${serverCategory} ${id.trim()}`);
-    else { console.log('El ID no puede estar vacío.'); showMenu(); }
+  rl.question(promptText, (term) => {
+    if (term.trim()) {
+      // Envía el comando al servidor. El 'command' ya viene correcto ('GET' o 'SEARCH')
+      client.write(`${command} ${serverCategory} ${term.trim()}`);
+    } else {
+      console.log('El parámetro no puede estar vacío.');
+      showMenu();
+    }
   });
 }
 
