@@ -107,17 +107,31 @@ const AuthorsController = {
     }
   },
 
-  /**
-   * Elimina un autor por su ID único.
+  /** 
+   * Elimina un autor por su ID, solo si no tiene libros asociados.
    * @param {string} id - El ID del autor a eliminar.
    * @returns {string} La respuesta formateada.
    */
   deleteAuthor(id) {
     try {
-      // Le pedimos al Modelo que intente eliminar. El Modelo nos dirá si tuvo éxito.
+      // --- VERIFICACIÓN DE RESTRICCIÓN ---
+      // Buscamos si existen libros asociados a este autor.
+      const booksByAuthor = BooksModel.findBooksByAuthorId(id);
+
+      // Si el array resultante tiene uno o más libros, no permitimos la eliminación.
+      if (booksByAuthor.length > 0) {
+        return ResponseFormatter.formatError(
+          `No se puede eliminar el autor con ID ${id} porque tiene ${booksByAuthor.length} libro(s) asociado(s).`
+        );
+      }
+      // ------------------------------------------
+
+      // --- PROCEDER CON LA ELIMINACIÓN ---
+      // Si el código llega hasta aquí, significa que el autor no tiene libros.
       const success = AuthorsModel.deleteAuthor(id);
+
       if (success) {
-        return ResponseFormatter.formatSuccess(`Autor con ID ${id} eliminado correctamente.`);
+        return ResponseFormatter.formatSuccess(`Autor con ID ${id} ha sido eliminado.`);
       } else {
         return ResponseFormatter.formatError(`No se encontró ningún autor con el ID ${id} para eliminar.`);
       }

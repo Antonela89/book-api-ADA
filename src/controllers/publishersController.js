@@ -97,15 +97,27 @@ const PublishersController = {
   },
 
     /**
-     * Elimina un editorial por su id.
-     * @param {string} id El id del editorial a eliminar.
-     * @returns {string} La respuesta formateada.
-     */
-     deletePublisher(id) {
+   * Elimina una editorial por su ID, solo si no tiene libros asociados.
+   * @param {string} id - El ID de la editorial a eliminar.
+   * @returns {string} La respuesta formateada.
+   */
+  deletePublisher(id) {
     try {
+      // --- VERIFICACIÓN DE RESTRICCIÓN ---
+      const booksByPublisher = BooksModel.findBooksByPublisherId(id);
+
+      if (booksByPublisher.length > 0) {
+        return ResponseFormatter.formatError(
+          `No se puede eliminar la editorial con ID ${id} porque tiene ${booksByPublisher.length} libro(s) asociado(s).`
+        );
+      }
+      // ------------------------------------------
+
+      // --- PROCEDER CON LA ELIMINACIÓN ---
       const success = PublishersModel.deletePublisher(id);
+
       if (success) {
-        return ResponseFormatter.formatSuccess(`Editorial con ID ${id} eliminada correctamente.`);
+        return ResponseFormatter.formatSuccess(`Editorial con ID ${id} ha sido eliminada.`);
       } else {
         return ResponseFormatter.formatError(`No se encontró ninguna editorial con el ID ${id} para eliminar.`);
       }

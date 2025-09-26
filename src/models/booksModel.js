@@ -57,6 +57,27 @@ const BooksModel = {
     return books.filter(book => book.title.toLowerCase().includes(title.toLowerCase()));
   },
 
+   /**
+   * Busca todos los libros asociados a un ID de autor.
+   * @param {string} authorId - El ID del autor.
+   * @returns {Array<object>} Un array con los libros de ese autor.
+   */
+  findBooksByAuthorId(authorId) {
+    const allBooks = this.getBooks();
+    return allBooks.filter(book => book.authorId === authorId);
+  },
+
+  /**
+   * Busca todos los libros asociados a un ID de editorial.
+   * @param {string} publisherId - El ID de la editorial.
+   * @returns {Array<object>} Un array con los libros de esa editorial.
+   */
+  findBooksByPublisherId(publisherId) {
+    const allBooks = this.getBooks();
+    return allBooks.filter(book => book.publisherId === publisherId);
+  },
+
+
   /**
    * Busca un único libro por su ID.
    * @param {string} id - El ID del libro (UUID).
