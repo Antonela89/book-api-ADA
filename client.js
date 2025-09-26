@@ -157,7 +157,7 @@ function askCategory(command) {
     } else if (command === 'GET_ID') {
       askForId('GET', serverCategory, clientCategory);
     } else if (command === 'POST') {
-      askForNewItemData(serverCategory, clientCategory);
+        askForNewItemData('POST', serverCategory, clientCategory);
     } else { // PUT o DELETE inician el flujo de varios pasos
       initiateMultiStepProcess(command, serverCategory, clientCategory);
     }
@@ -212,28 +212,35 @@ function initiateMultiStepProcess(command, serverCategory, clientCategory) {
 // --- FUNCIONES PARA PEDIR DATOS ---
 // (Estas funciones piden los datos al usuario y construyen el comando final)
 
-function askForNewItemData(command, serverCategory) {
-  const category = serverCategory.toLowerCase();
-
-  if (category === 'author') {
+/**
+ * Guía al usuario de forma interactiva para ingresar los datos de un nuevo ítem
+ * y construye el comando POST final para enviarlo al servidor.
+ * @param {string} command - El comando a ejecutar ('POST').
+ * @param {string} serverCategory - La categoría para el servidor (ej. 'AUTHOR').
+ * @param {string} clientCategory - La categoría para el usuario (ej. 'autor').
+ */
+function askForNewItemData(command, serverCategory, clientCategory) {
+  // La variable 'clientCategory' se usa para los prompts en español.
+  if (clientCategory === 'autor') {
     const newData = {};
     rl.question('Nombre del autor: ', (name) => {
       newData.name = name.trim();
       rl.question('Nacionalidad: ', (nationality) => {
         newData.nationality = nationality.trim();
-        client.write(`POST AUTHOR ${JSON.stringify(newData)}`);
+        // Construimos el comando final usando los parámetros recibidos.
+        client.write(`${command} ${serverCategory} ${JSON.stringify(newData)}`);
       });
     });
-  } else if (category === 'publisher') {
+  } else if (clientCategory === 'editorial') {
     const newData = {};
     rl.question('Nombre de la editorial: ', (name) => {
       newData.name = name.trim();
       rl.question('País: ', (country) => {
         newData.country = country.trim();
-        client.write(`POST PUBLISHER ${JSON.stringify(newData)}`);
+        client.write(`${command} ${serverCategory} ${JSON.stringify(newData)}`);
       });
     });
-  } else if (category === 'book') {
+  } else if (clientCategory === 'libro') {
     const newData = {};
     rl.question('Título del libro: ', (title) => {
       newData.title = title.trim();
@@ -245,7 +252,7 @@ function askForNewItemData(command, serverCategory) {
             newData.year = parseInt(year.trim(), 10);
             rl.question('Género: ', (genre) => {
               newData.genre = genre.trim();
-              client.write(`POST BOOK ${JSON.stringify(newData)}`);
+              client.write(`${command} ${serverCategory} ${JSON.stringify(newData)}`);
             });
           });
         });
