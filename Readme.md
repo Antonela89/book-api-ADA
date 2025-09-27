@@ -29,9 +29,11 @@ El proyecto está estructurado siguiendo el patrón **Modelo-Vista-Controlador (
 
 ### Principio DRY y Reutilización de Código
 
-Se exploraron dos enfoques para la capa de Modelo:
-1.  **Modelos Autónomos:** Funcional pero con duplicación de código.
-2.  **Fábrica de Modelos (Enfoque Ideal):** La solución implementada utiliza un módulo de utilidades (`src/utils/`) y una "fábrica" (`src/models/createDataModel.js`) para centralizar la lógica CRUD, adhiriéndose estrictamente al principio **DRY (Don't Repeat Yourself)**.
+La solución implementada se adhiere estrictamente al principio DRY (Don't Repeat Yourself) mediante el uso extensivo de la carpeta src/utils/:
+
+1. **Para los Modelos:** Se utiliza una "fábrica" (src/models/createDataModel.js) que centraliza toda la lógica de acceso a archivos, haciendo que los modelos individuales sean simples y declarativos.
+
+2. **Para los Controladores:** Se extrajo la lógica común de manipulación de datos (como el formateo de texto y el parseo de objetos de entrada) a módulos como formatters.js y objectUtils.js. Esto limpia los controladores, permitiéndoles centrarse exclusivamente en las reglas de negocio.
 
 ---
 
@@ -64,6 +66,8 @@ API-ADA/
     │   ├── createDataModel.js
     │   └── publishersModel.js
     ├── utils/
+    │   ├── formatters.js
+    │   ├── objectUtils.js
     │   └── utils.js
     └── views/
         └── responseFormatter.js
@@ -109,10 +113,13 @@ En tu primera terminal, ejecuta el siguiente comando.
 ```bash
 npm start
 ```
+
 o alternativamente:
+
 ```bash
 node server.js
 ```
+
 Verás un mensaje de confirmación: `Servidor TCP escuchando en el puerto 8080`.
 
 ### 2. Iniciar el Cliente Interactivo
@@ -122,6 +129,7 @@ En una **segunda terminal**, ejecuta el siguiente comando para conectarte al ser
 ```bash
 node client.js
 ```
+
 Aparecerá el menú principal para empezar a interactuar con la aplicación.
 
 ---
