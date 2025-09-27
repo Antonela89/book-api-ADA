@@ -6,17 +6,8 @@
 import { AuthorsModel } from '../models/authorsModel.js';
 import { BooksModel } from '../models/booksModel.js';
 import { ResponseFormatter } from '../views/responseFormatter.js';
-
-/**
- * Convierte un string a formato Capital Case.
- * ej: "jorge luis borges" -> "Jorge Luis Borges"
- * @param {string} str - El string a convertir.
- * @returns {string} El string formateado.
- */
-function toCapitalCase(str) {
-  if (!str) return '';
-  return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-}
+import { toCapitalCase } from '../utils/formatters.js';
+import { getCaseInsensitiveValue, buildUpdateObject } from '../utils/objectUtils.js';
 
 // Creación del objeto para encapsular los métodos relacionados con autores.
 const AuthorsController = {
@@ -83,8 +74,8 @@ const AuthorsController = {
   addAuthor(newAuthorData) {
     try {
       // Normalizamos los datos de entrada (aceptamos claves en mayúsculas o minúsculas).
-      const rawName = newAuthorData.NAME || newAuthorData.name;
-      const rawNationality = newAuthorData.NATIONALITY || newAuthorData.nationality;
+      const rawName = getCaseInsensitiveValue(newAuthorData, 'name');
+      const rawNationality = getCaseInsensitiveValue(newAuthorData, 'nationality');
 
       if (!rawName || !rawNationality) {
         return ResponseFormatter.formatError('Faltan datos obligatorios (name, nationality).');
@@ -105,34 +96,36 @@ const AuthorsController = {
       // Pasamos el objeto limpio al Modelo para que lo guarde.
       AuthorsModel.addAuthor(authorToSave);
       return ResponseFormatter.formatSuccess('Autor añadido correctamente.', authorToSave);
-    } catch (error)      {
+    } catch (error) {
       console.error('Error en addAuthor:', error);
       return ResponseFormatter.formatError('Ocurrió un error al añadir el autor.');
     }
   },
 
   /**
-   * Edita un autor por su ID.
-   * @param {string} id - El ID del autor a editar.
-   * @param {object} updatedAuthorData - Los nuevos datos del autor.
+   * Actualiza un autor existente por su ID.
+   * @param {string} id - El ID del autor a actualizar.
+   * @param {object} updatedAuthorData - Los nuevos datos para el autor.
    * @returns {string} La respuesta formateada.
    */
   updateAuthor(id, updatedAuthorData) {
     try {
-      // Filtramos y normalizamos solo los campos que nos interesan.
-      const dataToUpdate = {};
-      const rawName = updatedAuthorData.NAME || updatedAuthorData.name;
-      if (rawName) dataToUpdate.name = toCapitalCase(rawName);
+      // Definir los campos que se pueden actualizar.
+      const allowedFields = {
+        name: 'string',
+        nationality: 'string'
+      };
 
-      const rawNationality = updatedAuthorData.NATIONALITY || updatedAuthorData.nationality;
-      if (rawNationality) dataToUpdate.nationality = toCapitalCase(rawNationality);
+      // Usar la nueva utilidad para crear el objeto de actualización de forma segura.
+      const dataToUpdate = buildUpdateObject(updatedAuthorData, allowedFields);
 
-      // Regla de negocio: si no se pasó ningún dato válido, devolvemos un error.
+      // Regla de negocio: si no se pasaron datos válidos, devolver un error.
       if (Object.keys(dataToUpdate).length === 0) {
-        return ResponseFormatter.formatError(`No se proporcionaron datos válidos (name, nationality) para actualizar.`);
+        const validFields = Object.keys(allowedFields).join(', ');
+        return ResponseFormatter.formatError(`No se proporcionaron datos válidos (${validFields}) para actualizar.`);
       }
 
-      // Le pedimos al Modelo que intente actualizar con los datos ya filtrados.
+      // Pasar el objeto limpio al Modelo.
       const success = AuthorsModel.updateAuthor(id, dataToUpdate);
       if (success) {
         return ResponseFormatter.formatSuccess(`Autor con ID ${id} actualizado correctamente.`);
@@ -167,7 +160,7 @@ const AuthorsController = {
           `No se puede eliminar al autor "${authorExists.name}" porque tiene ${booksByAuthor.length} libro(s) asociado(s). Primero elimina sus libros.`
         );
       }
-      
+
       // Si el autor existe y no tiene libros, procedemos a eliminarlo.
       const success = AuthorsModel.deleteAuthor(id);
       if (success) {

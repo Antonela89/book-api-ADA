@@ -5,7 +5,9 @@
 import { BooksModel } from '../models/booksModel.js';
 import { AuthorsModel } from '../models/authorsModel.js';
 import { PublishersModel } from '../models/publishersModel.js';
+import { toCapitalCase } from '../utils/formatters.js';
 import { ResponseFormatter } from '../views/responseFormatter.js';
+import { getCaseInsensitiveValue, buildUpdateObject } from '../utils/objectUtils.js';
 
 /**
  * Función auxiliar para formatear los datos de un libro para una mejor visualización.
@@ -27,17 +29,6 @@ function formatBookData(book) {
     year: book.year,
     genre: book.genre
   };
-}
-
-/**
- * Convierte un string a formato Capital Case.
- * ej: "jorge luis borges" -> "Jorge Luis Borges"
- * @param {string} str - El string a convertir.
- * @returns {string} El string formateado.
- */
-function toCapitalCase(str) {
-  if (!str) return '';
-  return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }
 
 // Creación de objeto de para encapsular metodos relacionados con libros
@@ -101,11 +92,11 @@ const BooksController = {
      */
   addBook(newBookData) {
     try {
-      const rawTitle = newBookData.TITLE || newBookData.title;
-      const rawAuthorName = newBookData.AUTHORNAME || newBookData.authorName;
-      const rawPublisherName = newBookData.PUBLISHERNAME || newBookData.publisherName;
-      const rawYear = newBookData.YEAR || newBookData.year;
-      const rawGenre = newBookData.GENRE || newBookData.genre;
+      const rawTitle = getCaseInsensitiveValue(newBookData, 'title');
+      const rawAuthorName = getCaseInsensitiveValue(newBookData, 'authorName');
+      const rawPublisherName = getCaseInsensitiveValue(newBookData, 'publisherName');
+      const rawYear = getCaseInsensitiveValue(newBookData, 'year');
+      const rawGenre = getCaseInsensitiveValue(newBookData, 'genre');
 
       if (!rawTitle || !rawAuthorName || !rawPublisherName || !rawYear || !rawGenre) {
         return ResponseFormatter.formatError('Faltan datos obligatorios (title, authorName, publisherName, year, genre).');
@@ -146,37 +137,36 @@ const BooksController = {
   },
 
   /**
- * Actualiza un libro existente (solo año, titulo y genero)
- * @param {string} id - El ID del libro a actualizar.
- * @param {object} updatedBookData - Los datos a actualizar. 
- * @returns {string} La respuesta formateada.
- */
+  * Actualiza un libro existente (solo título, año y género).
+  * @param {string} id - El ID del libro a actualizar.
+  * @param {object} updatedBookData - Los datos a actualizar.
+  * @returns {string} La respuesta formateada.
+  */
   updateBook(id, updatedBookData) {
     try {
-      // Regla de negocio: no permitir cambiar autor/editorial vía actualización.
-      if (updatedBookData.authorName || updatedBookData.publisherName || updatedBookData.authorId || updatedBookData.publisherId || updatedBookData.AUTHORNAME || updatedBookData.PUBLISHERNAME) {
+      // Regla de negocio: verificar si se intenta cambiar campos no permitidos.
+      // Usamos la utilidad para hacer la comprobación más robusta.
+      if (getCaseInsensitiveValue(updatedBookData, 'authorName') || getCaseInsensitiveValue(updatedBookData, 'publisherName')) {
         return ResponseFormatter.formatError("Para cambiar autor o editorial, debe eliminar y volver a crear el libro.");
       }
 
-      // Filtramos y normalizamos solo los campos permitidos.
-      const dataToUpdate = {};
-      const rawTitle = updatedBookData.TITLE || updatedBookData.title;
-      if (rawTitle) dataToUpdate.title = toCapitalCase(rawTitle);
+      // Definir los campos permitidos Y SU TIPO.
+      const allowedFields = {
+        title: 'string',
+        year: 'number',
+        genre: 'string'
+      };
 
-      const rawYear = updatedBookData.YEAR || updatedBookData.year;
-      if (rawYear) dataToUpdate.year = parseInt(rawYear);
+      // Usar la utilidad para crear el objeto de actualización de forma segura.
+      const dataToUpdate = buildUpdateObject(updatedBookData, allowedFields);
 
-      const rawGenre = updatedBookData.GENRE || updatedBookData.genre;
-      if (rawGenre) dataToUpdate.genre = toCapitalCase(rawGenre);
-
+      // Regla de negocio: si no se pasaron datos válidos, devolver un error.
       if (Object.keys(dataToUpdate).length === 0) {
-        return ResponseFormatter.formatError("No se proporcionaron datos válidos (title, year, genre) para actualizar.");
+        const validFields = Object.keys(allowedFields).join(', ');
+        return ResponseFormatter.formatError(`No se proporcionaron datos válidos (${validFields}) para actualizar.`);
       }
 
-      if (updatedBookData.authorName || updatedBookData.publisherName || updatedBookData.authorId || updatedBookData.publisherId) {
-        return ResponseFormatter.formatError("Para cambiar autor o editorial, debe eliminar y volver a crear el libro. Solo se permite actualizar título, año y género.");
-      }
-
+      // Pasar el objeto limpio al Modelo.
       const success = BooksModel.updateBook(id, dataToUpdate);
       if (success) {
         return ResponseFormatter.formatSuccess(`Libro con ID ${id} actualizado correctamente.`);
@@ -188,7 +178,6 @@ const BooksController = {
       return ResponseFormatter.formatError('Error al actualizar libro.');
     }
   },
-
   /**
  * Elimina un libro por su ID.
  * @param {string} id - El ID del libro a eliminar.

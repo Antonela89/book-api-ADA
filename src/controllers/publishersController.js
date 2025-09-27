@@ -5,17 +5,8 @@
 import { PublishersModel } from '../models/publishersModel.js';
 import { BooksModel } from '../models/booksModel.js';
 import { ResponseFormatter } from '../views/responseFormatter.js';
-
-/**
- * Convierte un string a formato Capital Case.
- * ej: "jorge luis borges" -> "Jorge Luis Borges"
- * @param {string} str - El string a convertir.
- * @returns {string} El string formateado.
- */
-function toCapitalCase(str) {
-  if (!str) return '';
-  return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-}
+import { toCapitalCase } from '../utils/formatters.js';
+import { getCaseInsensitiveValue, buildUpdateObject } from '../utils/objectUtils.js';
 
 // Creamos el objeto para agrupar todos los métodos relacionados con editoriales.
 const PublishersController = {
@@ -79,8 +70,8 @@ const PublishersController = {
   addPublisher(newPublisherData) {
     try {
       // Normalizamos los datos de entrada.
-      const rawName = newPublisherData.NAME || newPublisherData.name;
-      const rawCountry = newPublisherData.COUNTRY || newPublisherData.country;
+      const rawName = getCaseInsensitiveValue(newPublisherData, 'name');
+      const rawCountry = getCaseInsensitiveValue(newPublisherData, 'country');
 
       if (!rawName || !rawCountry) {
         return ResponseFormatter.formatError('Faltan datos obligatorios (name, country).');
@@ -108,27 +99,29 @@ const PublishersController = {
   },
 
   /**
-   * Actualiza una editorial existente por su ID.
-   * @param {string} id - El ID de la editorial a actualizar.
-   * @param {object} updatedPublisherData - Los nuevos datos para la editorial.
-   * @returns {string} La respuesta formateada.
-   */
+ * Actualiza una editorial existente por su ID.
+ * @param {string} id - El ID de la editorial a actualizar.
+ * @param {object} updatedPublisherData - Los nuevos datos para la editorial.
+ * @returns {string} La respuesta formateada.
+ */
   updatePublisher(id, updatedPublisherData) {
     try {
-      // Filtramos y normalizamos los datos de entrada.
-      const dataToUpdate = {};
-      const rawName = updatedPublisherData.NAME || updatedPublisherData.name;
-      if (rawName) dataToUpdate.name = toCapitalCase(rawName);
+      // Definir los campos que se pueden actualizar.
+      const allowedFields = {
+        name: 'string',
+        country: 'string'
+      };
 
-      const rawCountry = updatedPublisherData.COUNTRY || updatedPublisherData.country;
-      if (rawCountry) dataToUpdate.country = toCapitalCase(rawCountry);
+      // Usar la nueva utilidad para crear el objeto de actualización de forma segura.
+      const dataToUpdate = buildUpdateObject(updatedPublisherData, allowedFields);
 
-      // Regla de negocio: si no se pasaron datos válidos, devolvemos un error.
+      // Regla de negocio: si no se pasaron datos válidos, devolver un error.
       if (Object.keys(dataToUpdate).length === 0) {
-        return ResponseFormatter.formatError(`No se proporcionaron datos válidos (name, country) para actualizar.`);
+        const validFields = Object.keys(allowedFields).join(', ');
+        return ResponseFormatter.formatError(`No se proporcionaron datos válidos (${validFields}) para actualizar.`);
       }
 
-      // Le pasamos al Modelo el objeto 'dataToUpdate' con los datos ya filtrados.
+      // Pasar el objeto limpio al Modelo.
       const success = PublishersModel.updatePublisher(id, dataToUpdate);
       if (success) {
         return ResponseFormatter.formatSuccess(`Editorial con ID ${id} actualizada correctamente.`);
@@ -153,7 +146,7 @@ const PublishersController = {
       if (!publisherExists) {
         return ResponseFormatter.formatError(`No se encontró ninguna editorial con el ID ${id} para eliminar.`);
       }
-      
+
       // Regla de negocio: buscamos si existen libros asociados.
       const booksByPublisher = BooksModel.findBooksByPublisherId(id);
 
@@ -163,7 +156,7 @@ const PublishersController = {
           `No se puede eliminar la editorial "${publisherExists.name}" porque tiene ${booksByPublisher.length} libro(s) asociado(s).`
         );
       }
-      
+
       // Si no hay libros, procedemos a eliminar.
       const success = PublishersModel.deletePublisher(id);
       if (success) {
