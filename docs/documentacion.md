@@ -8,9 +8,9 @@ Este documento proporciona un análisis técnico detallado de la arquitectura y 
 
 El proyecto está diseñado siguiendo estrictamente el patrón de diseño **MVC** para garantizar una clara separación de responsabilidades, lo que resulta en un código más limpio, mantenible y escalable.
 
-*   **Modelo (`/src/models`)**: Es la capa de acceso a datos. Su única responsabilidad es interactuar directamente con la "base de datos" (los archivos `.json`).
-*   **Vista (`/src/views`)**: Es la capa de presentación. Su única responsabilidad es tomar los datos que le entrega el Controlador y darles un formato legible para la terminal.
-*   **Controlador (`/src/controllers`)**: Es la capa de lógica de negocio y el "cerebro" de la aplicación. Actúa como intermediario entre el Servidor, el Modelo y la Vista.
+- **Modelo (`/src/models`)**: Es la capa de acceso a datos. Su única responsabilidad es interactuar directamente con la "base de datos" (los archivos `.json`).
+- **Vista (`/src/views`)**: Es la capa de presentación. Su única responsabilidad es tomar los datos que le entrega el Controlador y darles un formato legible para la terminal.
+- **Controlador (`/src/controllers`)**: Es la capa de lógica de negocio y el "cerebro" de la aplicación. Actúa como intermediario entre el Servidor, el Modelo y la Vista.
 
 ## 3. Análisis por Capas y Archivos
 
@@ -21,8 +21,9 @@ Para la capa de modelos, se exploraron dos arquitecturas con diferentes niveles 
 #### **Versión 1: Modelos Autónomos (Enfoque Directo)**
 
 Esta es la implementación base, donde cada modelo es un archivo independiente.
-*   **Ventajas:** Es un enfoque muy directo y fácil de entender.
-*   **Desventajas:** Conduce a una significativa **duplicación de código**, violando el **principio DRY (Don't Repeat Yourself)**.
+
+- **Ventajas:** Es un enfoque muy directo y fácil de entender.
+- **Desventajas:** Conduce a una significativa **duplicación de código**, violando el **principio DRY (Don't Repeat Yourself)**.
 
 <div style="display: flex; justify-content: space-around;">
   <figure>
@@ -39,9 +40,9 @@ Esta es la implementación base, donde cada modelo es un archivo independiente.
 
 Para solucionar la duplicación, se propone una arquitectura más avanzada.
 
-**`utils/utils.js` (Módulo de Utilidades)**
+**`/src/utils` (Carpeta de Utilidades)**
 
-Centraliza todas las operaciones de bajo nivel con el sistema de archivos, siguiendo el Principio de Responsabilidad Única.
+Para maximizar la reutilización de código, se creó una carpeta `/utils` que contiene módulos con responsabilidades bien definidas. Por ejemplo, `utils/utils.js`centraliza todas las operaciones de bajo nivel con el sistema de archivos para los modelos, siguiendo el Principio de Responsabilidad Única.
 
 <figure align="center">
   <img src="./img/models-img/utils.png" alt="utils.js"/>
@@ -72,7 +73,7 @@ El resultado es que los modelos específicos se vuelven increíblemente simples 
 
 La capa de Vistas se centraliza en `views/responseFormatter.js`.
 
-*   **Funcionalidad Clave:** `formatSuccess()`, `formatError()` y `formatAsTable()` para una presentación de datos consistente, inteligente y dinámica. La función `formatAsTable()` se adapta a cualquier array de objetos, calculando anchos de columna para una alineación perfecta.
+- **Funcionalidad Clave:** `formatSuccess()`, `formatError()` y `formatAsTable()` para una presentación de datos consistente, inteligente y dinámica. La función `formatAsTable()` se adapta a cualquier array de objetos, calculando anchos de columna para una alineación perfecta.
 
 <figure align="center">
   <img src="./img/views-img/listarLibros.png" alt="listarLibros"/>
@@ -85,19 +86,35 @@ La capa de Vistas se centraliza en `views/responseFormatter.js`.
 
 La capa de Controladores es el **"cerebro"** de la aplicación, donde reside toda la lógica de negocio.
 
-*   **Lógica de Negocio Clave:**
-    *   **Prevención de Duplicados:** No permite agregar un ítem si ya existe uno con el mismo nombre/título.
-    *   **"Hidratación" de Datos:** Reemplaza los IDs de los libros por los nombres de autor y editorial.
-    *   **Restricción de Eliminación:** Impide eliminar un autor o editorial si tienen libros asociados, protegiendo la integridad de los datos.
+- **Lógica de Negocio Clave:**
+  - **Prevención de Duplicados:** No permite agregar un ítem si ya existe uno con el mismo nombre/título.
+  - **"Hidratación" de Datos:** Reemplaza los IDs de los libros por los nombres de autor y editorial.
+  - **Restricción de Eliminación:** Impide eliminar un autor o editorial si tienen libros asociados, protegiendo la integridad de los datos.
 
 <figure align="center">
   <img src="./img/controllers-img/deleteAuthor.png" alt="deleteAuthors"/>
   <figcaption> Implementación de la "restricción de eliminación" en <code>AuthorsController.js</code>.</figcaption>
 </figure>
 
+#### **Refactorización y Utilidades Clave (`/src/utils`)**
+
+Para evitar la repetición de código y mejorar la mantenibilidad dentro de los controladores, la lógica común de manipulación de datos fue extraída a módulos de utilidades, siguiendo los principios **DRY** y de **Responsabilidad Única**
+
+- **`utils/formatters.js`**: Centraliza funciones de formato de texto, como `toCapitalCase()`, garantizando una presentación de datos consistente.
+- **`utils/objectUtils.js`**: Proporciona herramientas para trabajar con los objetos de datos que llegan desde el cliente. Las funciones clave son:
+
+  - `getCaseInsensitiveValue()`: Permite obtener datos de un objeto sin preocuparse de si la clave está en mayúsculas o minúsculas (ej. `name` vs `NAME`).
+  - `buildUpdateObject()`: Una función potente y segura que construye el objeto de datos para las actualizaciones. Filtra solo los campos permitidos, aplica el formato correcto a los strings y convierte los números a su tipo correcto, previniendo errores de integridad de datos.
+    Esta refactorización hace que los métodos de los controladores, como `updateAuthor()`, sean mucho más limpios y se centren exclusivamente en la lógica de negocio.
+
 <figure align="center">
   <img src="./img/controllers-img/addBook.png" alt="addBook"/>
-  <figcaption> Ejemplo de validación múltiple en <code>BooksController.js</code>.</figcaption>
+  <figcaption> Ejemplo de validación múltiple y de <code>getCaseInsensitiveValue()</code> en <code>booksController.js</code>.</figcaption>
+</figure>
+
+<figure align="center">
+  <img src="./img/controllers-img/updatePublisher.png" alt="updatePublisher"/>
+  <figcaption> Empleo de <code>buildUpdateObject()</code> en <code>publishersController.js</code>.</figcaption>
 </figure>
 
 ---
@@ -108,10 +125,10 @@ La capa de Controladores es el **"cerebro"** de la aplicación, donde reside tod
 
 Actúa como un **enrutador (router)** delgado y eficiente, delegando toda la lógica a los controladores.
 
-*   **Responsabilidades:**
-    *   Crear el servidor TCP y manejar múltiples clientes.
-    *   Parsear los comandos entrantes.
-    *   Delegar la ejecución al controlador apropiado a través de un `switch` principal.
+- **Responsabilidades:**
+  - Crear el servidor TCP y manejar múltiples clientes.
+  - Parsear los comandos entrantes.
+  - Delegar la ejecución al controlador apropiado a través de un `switch` principal.
 
 <figure align="center">
   <img src="./img/server-img/switch.png" alt="switch - funcion"/>
@@ -122,10 +139,10 @@ Actúa como un **enrutador (router)** delgado y eficiente, delegando toda la ló
 
 Es la puerta de entrada para el usuario final, enfocado en una buena experiencia de usuario (UX).
 
-*   **Características Clave:**
-    *   **Menús Interactivos Guiados:** Utiliza menús numéricos para una interacción fluida y a prueba de errores.
-    *   **Flujos de Múltiples Pasos (Máquina de Estados):** Utiliza una variable de estado (`nextAction`) para manejar operaciones complejas como "Editar" y "Eliminar".
-    *   **Conexión Persistente:** Mantiene una única conexión con el servidor para mayor eficiencia.
+- **Características Clave:**
+  - **Menús Interactivos Guiados:** Utiliza menús numéricos para una interacción fluida y a prueba de errores.
+  - **Flujos de Múltiples Pasos (Máquina de Estados):** Utiliza una variable de estado (`nextAction`) para manejar operaciones complejas como "Editar" y "Eliminar".
+  - **Conexión Persistente:** Mantiene una única conexión con el servidor para mayor eficiencia.
 
 <figure align="center">
   <img src="./img/client-img/maquina_estados.gif" alt="Flujo de Edición Interactivo"/>
@@ -138,8 +155,8 @@ Es la puerta de entrada para el usuario final, enfocado en una buena experiencia
 
 Para garantizar la calidad y el correcto funcionamiento de la API, se ha creado un script de pruebas automatizado.
 
-*   **Propósito:** Ejecuta una secuencia predefinida de comandos que cubren el ciclo CRUD completo y las reglas de negocio.
-*   **Funcionalidad:** Sirve como una **prueba de regresión**, permitiendo verificar rápidamente que nuevos cambios no hayan roto la funcionalidad existente.
+- **Propósito:** Ejecuta una secuencia predefinida de comandos que cubren el ciclo CRUD completo y las reglas de negocio.
+- **Funcionalidad:** Sirve como una **prueba de regresión**, permitiendo verificar rápidamente que nuevos cambios no hayan roto la funcionalidad existente.
 
 ---
 
@@ -147,7 +164,7 @@ Para garantizar la calidad y el correcto funcionamiento de la API, se ha creado 
 
 A continuación se muestra un diagrama de flujo que ilustra la secuencia completa de interacciones entre las capas de la aplicación.
 
-```mermaid
+````mermaid
 sequenceDiagram
     participant Usuario
     participant Client
@@ -181,3 +198,4 @@ sequenceDiagram
     Server-->>-Client: 21. Envía respuesta final
     Client-->>-Usuario: 22. Muestra "Autor eliminado"
     ```
+````
