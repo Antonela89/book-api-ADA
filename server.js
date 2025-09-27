@@ -43,8 +43,7 @@ const server = net.createServer((socket) => {
       commandPart = message;
     }
 
-    // --- LÓGICA DE PARSEO CORREGIDA Y ROBUSTA ---
-    // Dividimos el comando SIN cambiar a mayúsculas todavía.
+    // --- LÓGICA DE PARSEO  ---
     const commandParts = commandPart.split(" ");
 
     // Extraemos las partes y normalizamos a mayúsculas SOLO las que necesitamos.
