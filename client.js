@@ -58,12 +58,12 @@ function handleServerResponse(data) {
       if (currentAction.command === 'ADD_AUTHOR_DETAILS') {
         rl.question(`Nacionalidad para "${currentAction.name}": `, (nationality) => {
           const newData = { name: currentAction.name, nationality: nationality.trim() };
-          client.write(`POST AUTHOR ${JSON.stringify(newData)}`);
+          client.write(`POST AUTHOR;;${JSON.stringify(newData)}`);
         });
       } else if (currentAction.command === 'ADD_PUBLISHER_DETAILS') {
         rl.question(`País para "${currentAction.name}": `, (country) => {
           const newData = { name: currentAction.name, country: country.trim() };
-          client.write(`POST PUBLISHER ${JSON.stringify(newData)}`);
+          client.write(`POST PUBLISHER;;${JSON.stringify(newData)}`);
         });
       } else if (currentAction.command === 'ADD_BOOK_DETAILS') {
         rl.question(`Nombre exacto del autor para "${currentAction.title}": `, (authorName) => {
@@ -77,7 +77,7 @@ function handleServerResponse(data) {
                   year: parseInt(year.trim(), 10),
                   genre: genre.trim()
                 };
-                client.write(`POST BOOK ${JSON.stringify(newData)}`);
+                client.write(`POST BOOK;;${JSON.stringify(newData)}`);
               });
             });
           });
@@ -206,7 +206,7 @@ function askCategory(command) {
       // Llama a la función para buscar por ID
       askForTermOrIdToView('GET', serverCategory, clientCategory, true);
     } else if (command === 'POST') {
-        askForNewItemData(clientCategory);
+      askForNewItemData(clientCategory);
     } else { // PUT o DELETE inician el flujo de varios pasos
       initiateMultiStepProcess(command, serverCategory, clientCategory);
     }
@@ -295,7 +295,7 @@ function askForUpdatedAuthorData(id) {
       if (nationality.trim()) updatedData.nationality = nationality.trim();
 
       if (Object.keys(updatedData).length > 0) {
-        client.write(`PUT AUTHOR ${id} ${JSON.stringify(updatedData)}`);
+        client.write(`PUT AUTHOR ${id};;${JSON.stringify(updatedData)}`);
       } else {
         console.log('No se realizaron cambios.');
         showMenu();
@@ -312,7 +312,7 @@ function askForUpdatedPublisherData(id) {
       if (country.trim()) updatedData.country = country.trim();
 
       if (Object.keys(updatedData).length > 0) {
-        client.write(`PUT PUBLISHER ${id} ${JSON.stringify(updatedData)}`);
+        client.write(`PUT PUBLISHER ${id};;${JSON.stringify(updatedData)}`);
       } else {
         console.log('No se realizaron cambios.');
         showMenu();
@@ -332,7 +332,7 @@ function askForUpdatedBookData(id) {
         if (genre.trim()) updatedData.genre = genre.trim();
 
         if (Object.keys(updatedData).length > 0) {
-          client.write(`PUT BOOK ${id} ${JSON.stringify(updatedData)}`);
+          client.write(`PUT BOOK ${id};;${JSON.stringify(updatedData)}`);
         } else {
           console.log('No se realizaron cambios.');
           showMenu();

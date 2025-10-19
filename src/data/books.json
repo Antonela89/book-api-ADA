@@ -30,5 +30,13 @@
     "publisherId": "9l69n22k-63k6-4j5j-8896-j625k0i59k65",
     "year": 1870,
     "genre": "Aventura"
+  },
+  {
+    "title": "El Otoño Del Patriarca",
+    "authorId": "1d81f44c-95c8-4b7b-8018-b847c2a71c87",
+    "publisherId": "7j47l00i-41i4-4h3h-8674-h403i8g37i43",
+    "year": 1975,
+    "genre": "Novela",
+    "id": "18dfab0b-07ff-4468-a108-16b18e3cdf1e"
   }
 ]
