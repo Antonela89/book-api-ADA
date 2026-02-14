@@ -138,7 +138,7 @@ Aparecerá el menú principal para empezar a interactuar con la aplicación.
 
 Si no quieres clonar el repositorio, puedes probar la aplicación directamente en tu navegador:
 
-1. Entra a este enlace: [https://replit.com/@AntonelaBorgogn/book-api-ADA]
+1. Entra a este enlace: [https://replit.com/@AntonelaBorgogn/book-api-ADA](Nota: Replit puede requerir iniciar sesión para ejecutar la consola interactiva).
 2. Haz clic en el botón verde **"Run"** en la parte superior.
 3. El servidor se iniciará automáticamente y, tras un par de segundos, aparecerá el **menú interactivo** en la consola de la derecha.
 4. ¡Interactúa con el menú usando los números de tu teclado!
