@@ -7,9 +7,14 @@ import { toCapitalCase } from './formatters.js';
  * @param {string} key - El nombre de la clave a buscar (ej. 'name').
  * @returns {any | undefined} El valor encontrado o undefined si no existe.
  */
-export function getCaseInsensitiveValue(obj, key) {
-  if (!obj || !key) return undefined;
-  return obj[key.toLowerCase()] || obj[key.toUpperCase()];
+export function getCaseInsensitiveValue(obj, keyToFind) {
+  if (!obj || !keyToFind) return undefined;
+  
+  const realKey = Object.keys(obj).find(
+    (k) => k.toLowerCase() === keyToFind.toLowerCase()
+  );
+  
+  return realKey ? obj[realKey] : undefined;
 }
 
 /**

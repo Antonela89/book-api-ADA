@@ -9,7 +9,8 @@ export function toCapitalCase(str) {
   if (!str) return '';
   return str
     .toLowerCase()
-    .split(' ')
+    .trim()
+    .split(/\s+/)
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }

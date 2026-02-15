@@ -57,7 +57,7 @@ const BooksModel = {
     return books.filter(book => book.title.toLowerCase().includes(title.toLowerCase()));
   },
 
-   /**
+  /**
    * Busca todos los libros asociados a un ID de autor.
    * @param {string} authorId - El ID del autor.
    * @returns {Array<object>} Un array con los libros de ese autor.
