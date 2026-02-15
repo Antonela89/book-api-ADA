@@ -144,6 +144,11 @@ Si no quieres clonar el repositorio, puedes probar la aplicación directamente e
 3. El servidor se iniciará automáticamente y, tras un par de segundos, aparecerá el **menú interactivo** en la consola de la derecha.
 4. ¡Interactúa con el menú usando los números de tu teclado!
 
+#### Demo
+<p>
+<img src="https://res.cloudinary.com/antonelab/image/upload/v1771121183/GitHub%20-%20Proyectos%20-%20Gif/book-api-ADA_-_Replit_gjqeh6.gif" alt="funcionamiento de api">
+</p>
+
 ---
 
 ## 🧪 Pruebas Automatizadas
@@ -158,6 +163,11 @@ El proyecto incluye un script que prueba automáticamente el ciclo CRUD y las re
     node test.js
     ```
 3.  La terminal mostrará el progreso y el resultado de cada prueba.
+
+#### Captura
+<p>
+<img src="./docs/img/test.png" alt="tests">
+</p>
 
 ---
 
